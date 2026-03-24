@@ -1,0 +1,17 @@
+template:
+  - binary_sensor:
+      - name: "Guest mode active"
+        unique_id: guest_mode_active
+        state: "{{ is_state('input_boolean.guest_mode', 'on') }}"
+        icon: mdi:account-group
+
+      - name: "Andre mode active"
+        unique_id: andre_mode_active
+        state: "{{ is_state('input_boolean.andre_mode', 'on') }}"
+        icon: mdi:account
+
+  - sensor:
+      - name: "House profile"
+        unique_id: house_profile_sensor
+        state: "{{ states('input_select.house_profile') }}"
+        icon: mdi:tune

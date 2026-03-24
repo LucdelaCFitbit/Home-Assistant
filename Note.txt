@@ -1,0 +1,26 @@
+Ce qui est déjà prêt:
+
+Configuration modulaire avec include pour automations, scripts, scenes et packages.
+Deux dashboards YAML déclarés dans Lovelace (Home + System).
+Helpers de base, template sensor/binary_sensor, scripts utilitaires et automations d’exemple.
+Conventions de nommage et d’organisation documentées.
+Notes importantes:
+
+Côté Home Assistant, il faudra placer ces fichiers dans le dossier de config actif puis vérifier la config YAML avant rechargement.
+Je ne peux pas valider le runtime Home Assistant depuis ce terminal, seulement la structure et la cohérence YAML.
+Prochaines options utiles:
+
+Je peux te générer une version “production” de cette base avec tes vraies entités (lumières, capteurs, zones).
+Je peux ajouter un package par pièce (salon, cuisine, chambre) avec automations prêtes.
+Je peux te préparer une checklist de migration depuis ton instance actuelle sans interruption.
+
+
+liste de modèles pour question IA
+    Choisis GPT-5.3-Codex pour écrire et corriger du YAML/automations.
+    Utilise un agent de type Explore seulement pour analyser un projet existant, pas pour générer du script complet.
+    Garde un modèle plus léger (ex: Haiku) pour des questions rapides, mais pas pour la logique d’automatisation.
+
+
+
+
+ajoute une automatisation lorsque j'ouvre Google TV dans le salon je veux déactivier le entrée Montion, je veux aussi fermer les lumières (entrée, Salle à manger, Foyer) et que tu tamise les lumière Salon plafond et met la scenes Rest pour Cuisine

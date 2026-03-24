@@ -1,0 +1,14 @@
+# Home Assistant runtime and secrets
+config/.storage/
+config/.cloud/
+config/secrets.yaml
+
+# Home Assistant generated files
+config/home-assistant_v2.db*
+config/home-assistant.log*
+config/OZW_Log.txt
+config/tts/
+
+# Python cache
+__pycache__/
+*.pyc

@@ -1,0 +1,68 @@
+title: Home Lab
+views:
+  - title: Overview
+    path: overview
+    icon: mdi:home
+    cards:
+      - type: entities
+        title: Home Modes
+        show_header_toggle: false
+        entities:
+          - entity: input_boolean.home_mode
+          - entity: input_boolean.guest_mode
+          - entity: input_boolean.andre_mode
+          - entity: input_select.house_profile
+          - entity: timer.focus_session
+
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: Visite ON
+            icon: mdi:account-group
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.guest_mode
+          - type: button
+            name: Visite OFF
+            icon: mdi:account-off
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.guest_mode
+
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: Andre ON
+            icon: mdi:account
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_on
+              target:
+                entity_id: input_boolean.andre_mode
+          - type: button
+            name: Andre OFF
+            icon: mdi:account-off
+            tap_action:
+              action: call-service
+              service: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.andre_mode
+
+      - type: entities
+        title: Room Controls
+        show_header_toggle: false
+        entities:
+          - entity: input_boolean.living_room_evening_scene
+
+      - type: buttons
+        entities:
+          - entity: script.set_home_mode_on
+            name: Home ON
+          - entity: script.set_home_mode_off
+            name: Home OFF
+          - entity: script.reload_yaml_configuration
+            name: Reload YAML

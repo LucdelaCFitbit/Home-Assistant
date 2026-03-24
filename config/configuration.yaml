@@ -1,0 +1,39 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+homeassistant:
+  packages: !include_dir_named packages
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+lovelace:
+  mode: storage
+  dashboards:
+    pixel-9a:
+      mode: yaml
+      title: Pixel 9a
+      icon: mdi:cellphone
+      show_in_sidebar: true
+      require_admin: false
+      filename: dashboards/pixel9a.yaml
+    home-lab:
+      mode: yaml
+      title: Home Lab
+      icon: mdi:home-assistant
+      show_in_sidebar: true
+      require_admin: false
+      filename: dashboards/home.yaml
+    system-lab:
+      mode: yaml
+      title: System
+      icon: mdi:server
+      show_in_sidebar: true
+      require_admin: true
+      filename: dashboards/system.yaml

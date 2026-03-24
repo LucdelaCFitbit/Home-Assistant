@@ -1,0 +1,32 @@
+set_home_mode_on:
+  alias: Set Home Mode On
+  description: Active le mode maison
+  sequence:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.home_mode
+set_home_mode_off:
+  alias: Set Home Mode Off
+  description: Desactive le mode maison
+  sequence:
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.home_mode
+reload_yaml_configuration:
+  alias: Reload YAML Configuration
+  description: Recharge la configuration sans redemarrage complet
+  sequence:
+  - service: homeassistant.reload_core_config
+  - service: automation.reload
+  - service: script.reload
+lock_porte_securise:
+  alias: "Verrouillage Sécurisé Porte Entrée"
+  description: "Vérifie l'état de la porte avant de lancer le verrouillage"
+  sequence:
+    - condition: state
+      entity_id: lock.porte
+      state: "unlocked"
+    - service: lock.lock
+      target:
+        entity_id: lock.porte
+  mode: single

@@ -1,0 +1,18 @@
+title: System
+views:
+  - title: Status
+    path: status
+    icon: mdi:server
+    cards:
+      - type: entities
+        title: System Entities
+        show_header_toggle: false
+        entities:
+          - entity: sensor.house_profile
+          - entity: binary_sensor.guest_mode_active
+
+      - type: markdown
+        title: Notes
+        content: |
+          This dashboard is intended for administration.
+          Use Developer Tools to validate YAML and reload automations/scripts after edits.

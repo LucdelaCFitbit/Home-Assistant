@@ -1,0 +1,4 @@
+input_boolean:
+  living_room_evening_scene:
+    name: Living Room Evening Scene
+    icon: mdi:sofa

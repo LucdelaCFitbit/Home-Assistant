@@ -1,0 +1,155 @@
+﻿title: Home Lab
+views:
+  - title: Pixel 9a
+    path: pixel-9a
+    icon: mdi:cellphone
+    cards:
+      - type: custom:mushroom-title-card
+        title: Maison
+        subtitle: Controle rapide Pixel 9a
+
+      - type: custom:mushroom-chips-card
+        chips:
+          - type: entity
+            entity: input_boolean.home_mode
+            name: Maison
+            icon_color: green
+          - type: entity
+            entity: input_boolean.guest_mode
+            name: Invite
+            icon_color: teal
+          - type: entity
+            entity: input_boolean.andre_mode
+            name: Andre
+            icon_color: blue
+          - type: entity
+            entity: timer.focus_session
+            name: Focus
+            icon_color: amber
+        alignment: justify
+
+      - type: grid
+        title: Actions rapides
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Home ON
+            secondary: Active le mode maison
+            icon: mdi:home
+            icon_color: green
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.set_home_mode_on
+          - type: custom:mushroom-template-card
+            primary: Home OFF
+            secondary: Coupe le mode maison
+            icon: mdi:home-off
+            icon_color: red
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.set_home_mode_off
+          - type: custom:mushroom-template-card
+            primary: Bonne nuit
+            secondary: Lance la sequence de nuit
+            icon: mdi:weather-night
+            icon_color: deep-purple
+            tap_action:
+              action: call-service
+              service: automation.trigger
+              target:
+                entity_id: automation.nuit_eteindre_toutes_les_lumieres_sauf_adresse
+          - type: custom:mushroom-template-card
+            primary: Verrouiller porte
+            secondary: Script securise
+            icon: mdi:lock
+            icon_color: indigo
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.lock_porte_securise
+
+      - type: grid
+        title: Eclairage
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.salle_a_manger
+            name: Salle a manger
+            show_brightness_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.entree_2
+            name: Entree
+            show_brightness_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.cote_luc
+            name: Cote Luc
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.armoire
+            name: Armoire
+            show_brightness_control: true
+            collapsible_controls: true
+
+      - type: grid
+        title: Stores
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-cover-card
+            entity: cover.salon
+            name: Salon
+            show_position_control: true
+          - type: custom:mushroom-cover-card
+            entity: cover.porte_patio
+            name: Porte patio
+            show_position_control: true
+          - type: custom:mushroom-cover-card
+            entity: cover.bureau
+            name: Bureau
+            show_position_control: true
+          - type: custom:mushroom-cover-card
+            entity: cover.chambre_maitre
+            name: Chambre maitre
+            show_position_control: true
+
+      - type: custom:mushroom-media-player-card
+        entity: media_player.tele_qn50ls03aafxzc
+        name: TV Salon
+        use_media_info: true
+        show_volume_level: true
+        volume_controls:
+          - volume_mute
+          - volume_set
+
+      - type: entities
+        title: Statuts maison
+        show_header_toggle: false
+        entities:
+          - entity: lock.porte
+          - entity: weather.forecast_maison
+          - entity: input_select.house_profile
+
+  - title: Classique
+    path: overview
+    icon: mdi:home-outline
+    cards:
+      - type: entities
+        title: Home Modes
+        show_header_toggle: false
+        entities:
+          - entity: input_boolean.home_mode
+          - entity: input_boolean.guest_mode
+          - entity: input_boolean.andre_mode
+          - entity: input_select.house_profile
+          - entity: timer.focus_session
