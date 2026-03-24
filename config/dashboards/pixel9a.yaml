@@ -8,25 +8,39 @@ views:
         title: Maison
         subtitle: Controle rapide Pixel 9a
 
-      - type: custom:mushroom-chips-card
-        chips:
-          - type: entity
+      - type: grid
+        title: Controle rapide Pixel 9a
+        columns: 4
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Maison
+            icon: mdi:home
+            icon_color: "{{ 'yellow' if is_state('input_boolean.home_mode', 'on') else 'disabled' }}"
             entity: input_boolean.home_mode
-            name: Maison
-            icon_color: green
-          - type: entity
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Invite
+            icon: mdi:account-multiple
+            icon_color: "{{ 'yellow' if is_state('input_boolean.guest_mode', 'on') else 'disabled' }}"
             entity: input_boolean.guest_mode
-            name: Invite
-            icon_color: teal
-          - type: entity
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Andre
+            icon: mdi:account
+            icon_color: "{{ 'yellow' if is_state('input_boolean.andre_mode', 'on') else 'disabled' }}"
             entity: input_boolean.andre_mode
-            name: Andre
-            icon_color: blue
-          - type: entity
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Focus
+            icon: mdi:timer
+            icon_color: "{{ 'yellow' if is_state('timer.focus_session', 'active') else 'disabled' }}"
             entity: timer.focus_session
-            name: Focus
-            icon_color: amber
-        alignment: justify
+            tap_action:
+              action: toggle
 
       - type: grid
         title: Actions rapides
@@ -75,6 +89,110 @@ views:
                 entity_id: script.lock_porte_securise
 
       - type: grid
+        title: Pièces
+        columns: 3
+        square: false
+        cards:
+          - type: area
+            area: salon
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-salon"
+          - type: area
+            area: foyer
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-foyer"
+          - type: area
+            area: salle_a_manger
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-salle_a_manger"
+          - type: area
+            area: cuisine
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-cuisine"
+          - type: area
+            area: entree
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-entree"
+          - type: area
+            area: chambre
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-chambre"
+          - type: area
+            area: poulailler
+            alert_classes:
+              - motion
+              - moisture
+            sensor_classes:
+              - temperature
+              - humidity
+            display_type: picture
+            features_position: bottom
+            vertical: false
+            tap_action:
+              action: navigate
+              navigation_path: "/home/areas-poulailler"
+
+      - type: grid
         title: Eclairage
         columns: 2
         square: false
@@ -103,6 +221,46 @@ views:
 
       - type: grid
         title: Stores
+        columns: 1
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Regroupes Stores
+            secondary: Accès à tous les stores de la maison
+            icon: mdi:blinds
+            icon_color: cyan
+            tap_action:
+              action: navigate
+              navigation_path: /pixel-9a/stores
+
+      - type: custom:mushroom-media-player-card
+        entity: media_player.tele_qn50ls03aafxzc
+        name: TV Salon
+        use_media_info: true
+        show_volume_level: true
+        volume_controls:
+          - volume_mute
+          - volume_set
+
+      - type: entities
+        title: Statuts maison
+        show_header_toggle: false
+        entities:
+          - entity: lock.porte
+          - entity: weather.forecast_maison
+          - entity: input_select.house_profile
+
+  - title: Stores
+    path: stores
+    icon: mdi:blinds
+    subview: true
+    cards:
+      - type: custom:mushroom-title-card
+        title: Stores
+        subtitle: Tous les stores de la maison
+
+      - type: grid
+        title: Tous les stores
         columns: 2
         square: false
         cards:
@@ -122,20 +280,7 @@ views:
             entity: cover.chambre_maitre
             name: Chambre maitre
             show_position_control: true
-
-      - type: custom:mushroom-media-player-card
-        entity: media_player.tele_qn50ls03aafxzc
-        name: TV Salon
-        use_media_info: true
-        show_volume_level: true
-        volume_controls:
-          - volume_mute
-          - volume_set
-
-      - type: entities
-        title: Statuts maison
-        show_header_toggle: false
-        entities:
-          - entity: lock.porte
-          - entity: weather.forecast_maison
-          - entity: input_select.house_profile
+          - type: custom:mushroom-cover-card
+            entity: cover.chambre_amis
+            name: Chambre amis
+            show_position_control: true
