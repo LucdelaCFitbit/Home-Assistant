@@ -30,3 +30,21 @@ lock_porte_securise:
       target:
         entity_id: lock.porte
   mode: single
+toggle_poules:
+  alias: Toggle Lumière Poulailler
+  description: Allume avec le scénario Concentration 100% ou éteint la lumière du Poulailler
+  sequence:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.poulailler
+              state: "on"
+          sequence:
+            - action: light.turn_off
+              target:
+                entity_id: light.poulailler
+      default:
+        - action: scene.turn_on
+          target:
+            entity_id: scene.poulailler_concentration
+  mode: single

@@ -10,11 +10,12 @@ views:
 
       - type: grid
         title: Controle rapide Pixel 9a
-        columns: 4
+        columns: 2
         square: false
         cards:
           - type: custom:mushroom-template-card
             primary: Maison
+            secondary: "{{ 'Activé' if is_state('input_boolean.home_mode', 'on') else 'Désactivé' }}"
             icon: mdi:home
             icon_color: "{{ 'yellow' if is_state('input_boolean.home_mode', 'on') else 'disabled' }}"
             entity: input_boolean.home_mode
@@ -22,6 +23,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Invite
+            secondary: "{{ 'Activé' if is_state('input_boolean.guest_mode', 'on') else 'Désactivé' }}"
             icon: mdi:account-multiple
             icon_color: "{{ 'yellow' if is_state('input_boolean.guest_mode', 'on') else 'disabled' }}"
             entity: input_boolean.guest_mode
@@ -29,6 +31,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Andre
+            secondary: "{{ 'Activé' if is_state('input_boolean.andre_mode', 'on') else 'Désactivé' }}"
             icon: mdi:account
             icon_color: "{{ 'yellow' if is_state('input_boolean.andre_mode', 'on') else 'disabled' }}"
             entity: input_boolean.andre_mode
@@ -36,6 +39,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Focus
+            secondary: "{{ 'Actif' if is_state('timer.focus_session', 'active') else 'Inactif' }}"
             icon: mdi:timer
             icon_color: "{{ 'yellow' if is_state('timer.focus_session', 'active') else 'disabled' }}"
             entity: timer.focus_session
@@ -47,26 +51,6 @@ views:
         columns: 2
         square: false
         cards:
-          - type: custom:mushroom-template-card
-            primary: Home ON
-            secondary: Active le mode maison
-            icon: mdi:home
-            icon_color: green
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              target:
-                entity_id: script.set_home_mode_on
-          - type: custom:mushroom-template-card
-            primary: Home OFF
-            secondary: Coupe le mode maison
-            icon: mdi:home-off
-            icon_color: red
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              target:
-                entity_id: script.set_home_mode_off
           - type: custom:mushroom-template-card
             primary: Bonne nuit
             secondary: Lance la sequence de nuit
@@ -197,6 +181,15 @@ views:
         columns: 2
         square: false
         cards:
+          - type: custom:mushroom-template-card
+            primary: Poules
+            secondary: "{{ 'Allumé' if is_state('light.poulailler', 'on') else 'Éteint' }}"
+            icon: mdi:barn
+            icon_color: "{{ 'yellow' if is_state('light.poulailler', 'on') else 'disabled' }}"
+            entity: light.poulailler
+            tap_action:
+              action: call-service
+              service: script.toggle_poules
           - type: custom:mushroom-light-card
             entity: light.salle_a_manger
             name: Salle a manger
