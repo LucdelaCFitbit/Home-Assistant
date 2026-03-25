@@ -48,3 +48,34 @@ toggle_poules:
           target:
             entity_id: scene.poulailler_concentration
   mode: single
+turn_off_all_lights_except_adresse:
+  alias: Lumiere | Eteindre toutes les lumieres sauf Adresse
+  description: Eteint toutes les lumieres allumees sauf celles de la zone Adresse.
+  sequence:
+  - action: light.turn_off
+    target:
+      entity_id: >-
+        {{
+          states.light
+          | selectattr('state', 'eq', 'on')
+          | map(attribute='entity_id')
+          | reject('in', area_entities('adresse'))
+          | list
+        }}
+  mode: single
+night_shutdown_except_adresse:
+  alias: Nuit | Extinction sauf Adresse
+  description: Verrouille la porte, eteint toutes les lumieres sauf Adresse et coupe la TV si necessaire.
+  sequence:
+  - action: script.lock_porte_securise
+  - action: script.turn_off_all_lights_except_adresse
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.tele_qn50ls03aafxzc
+        state: 'on'
+      sequence:
+      - action: media_player.turn_off
+        target:
+          entity_id: media_player.tele_qn50ls03aafxzc
+  mode: single

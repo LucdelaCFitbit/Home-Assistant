@@ -60,9 +60,9 @@ views:
             icon_color: deep-purple
             tap_action:
               action: call-service
-              service: automation.trigger
+              service: script.turn_on
               target:
-                entity_id: automation.nuit_eteindre_toutes_les_lumieres_sauf_adresse
+                entity_id: script.night_shutdown_except_adresse
           - type: custom:mushroom-template-card
             primary: Verrouiller porte
             secondary: Script securise

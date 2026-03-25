@@ -372,7 +372,7 @@
 # [NUIT - ETEINDRE TOUTES LES LUMIERES SAUF ADRESSE]
 # ============================================================
 # Entre 22:30 et 23:30 (heure aleatoire), eteint toutes les lumieres allumees sauf celles de la zone Adresse.
-- id: 'night_turn_off_all_lights_except_adresse'
+- id: 'night_random_turn_off_lights_except_adresse'
   alias: Lumiere | Nuit | Eteindre toutes les lumieres sauf Adresse
   description: Entre 22:30 et 23:30 (aleatoire), eteint toutes les lumieres allumees sauf la zone Adresse.
   triggers:
@@ -382,26 +382,17 @@
   actions:
   - delay:
       seconds: "{{ range(0, 3601) | random }}"
-  - action: script.lock_porte_securise
-  - action: light.turn_off
-    target:
-      entity_id: >-
-        {{
-          states.light
-          | selectattr('state', 'eq', 'on')
-          | map(attribute='entity_id')
-          | reject('in', area_entities('adresse'))
-          | list
-        }}
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: media_player.tele_qn50ls03aafxzc
-        state: 'on'
-      sequence:
-      - action: media_player.turn_off
-        target:
-          entity_id: media_player.tele_qn50ls03aafxzc
+  - action: script.night_shutdown_except_adresse
+  mode: single
+
+# Meme sequence que l'automatisation aleatoire, mais sans delai pour un lancement immediat.
+- id: 'night_turn_off_all_lights_except_adresse'
+  alias: Lumiere | Nuit | Eteindre toutes les lumieres sauf Adresse maintenant
+  description: Eteint immediatement toutes les lumieres allumees sauf la zone Adresse, verrouille la porte et eteint la TV si necessaire.
+  triggers: []
+  conditions: []
+  actions:
+  - action: script.night_shutdown_except_adresse
   mode: single
 
 # ============================================================
