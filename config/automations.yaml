@@ -391,38 +391,46 @@
 # A 06:30, la simulation aube commence.  
 - id: 'matin_reveille_aube_cote_luc'  
   alias: "Lumiere | Réveil : Aube Matinale - Chambre"
-  description: "Allume progressivement la lumière Côté Luc les matins de semaine avec la scene Chambre Repos, sauf en vacances, puis l'eteint a 07:30."
-  trigger:
-  - platform: time
-    at: "06:30:00" # Ajustez l'heure de votre réveil ici
-  condition:
-    - condition: state
-      entity_id: input_boolean.vacances
-      state: "off" # Ne s'exécute que si le bouton Vacances est éteint
-    - condition: time
-      weekday:
-        - mon
-        - tue
-        - wed
-        - thu
-        - fri # Seulement les jours de semaine
-  action:
-    - action: light.turn_on
-      target:
-        entity_id: light.cote_luc
-      data:
-        brightness_pct: 1
-        transition: 1
-    - delay: "00:00:02"
-    - action: scene.turn_on
-      target:
-        entity_id: scene.chambre_repos
-      data:
-        transition: 1800 # Transition de 30 minutes (1800 secondes)
-    - delay: "00:30:00"
-    - action: light.turn_off
-      target:
-        entity_id: light.cote_luc
+  description: "A 06:30 monte la lumiere Cote Luc a 50% (transition douce), puis a 07:00 la met a 100%, en semaine sauf en vacances."
+  triggers:
+  - trigger: time
+    at: '06:30:00'
+    id: dawn_50
+  - trigger: time
+    at: '07:00:00'
+    id: full_100
+  conditions:
+  - condition: state
+    entity_id: input_boolean.vacances
+    state: 'off'
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: dawn_50
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.cote_luc
+        data:
+          brightness_pct: 50
+          transition: 1800
+    - conditions:
+      - condition: trigger
+        id: full_100
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.cote_luc
+        data:
+          brightness_pct: 100
   mode: single
 
 # ============================================================
