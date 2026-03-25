@@ -8,6 +8,9 @@ input_boolean:
   andre_mode:
     name: Andre Mode
     icon: mdi:account
+  vacances:
+    name: Vacances
+    icon: mdi:beach
 
 input_select:
   house_profile:
