@@ -89,32 +89,32 @@
     target:
       entity_id: cover.salon
   mode: single
-# ============================================================
-# FIN SECTION
-# [SECTION AVEC ANDRE_MODE OU INVITE_MODE ACTIF, ON NE FERME PAS LES STORES SALON/SALLE A MANGER]
-# ============================================================
-# ============================================================
-# [OUVERTURE BUREAU LUC ET CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
-# ============================================================
-# Ouvre les stores du bureau Luc et de la chambre ami au lever du soleil, puis répète après 1 et 2 minutes.
-- id: 'sunrise_open_bureau_luc_with_repeats'
-  alias: Store |Bureau Luc et Chambre Ami | Ouvrir stores au lever du soleil (4 fois)
-  description: Ouvre les stores du bureau Luc et de la chambre ami au lever du soleil et répète l'action 4 fois au total.
-  triggers:
-    - trigger: sun
-      event: sunrise
-  conditions: []
-  actions:
-    - repeat:
-        count: 4
-        sequence:
-          - action: cover.open_cover
-            target:
-              entity_id:
-                - cover.bureau
-                - cover.chambre_amis
-          - delay: '00:00:30' # Attend 30 secondes avant la prochaine répétition
-  mode: single
+# # ============================================================
+# # FIN SECTION
+# # [SECTION AVEC ANDRE_MODE OU INVITE_MODE ACTIF, ON NE FERME PAS LES STORES SALON/SALLE A MANGER]
+# # ============================================================
+# # ============================================================
+# # [OUVERTURE BUREAU LUC ET CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
+# # ============================================================
+# # Ouvre les stores du bureau Luc et de la chambre ami au lever du soleil, puis répète après 1 et 2 minutes.
+# - id: 'sunrise_open_bureau_luc_with_repeats'
+#   alias: Store |Bureau Luc et Chambre Ami | Ouvrir stores au lever du soleil (4 fois)
+#   description: Ouvre les stores du bureau Luc et de la chambre ami au lever du soleil et répète l'action 4 fois au total.
+#   triggers:
+#     - trigger: sun
+#       event: sunrise
+#   conditions: []
+#   actions:
+#     - repeat:
+#         count: 4
+#         sequence:
+#           - action: cover.open_cover
+#             target:
+#               entity_id:
+#                 - cover.bureau
+#                 - cover.chambre_amis
+#           - delay: '00:00:30' # Attend 30 secondes avant la prochaine répétition
+#   mode: single
 # ============================================================
 # [FERMETURE BUREAU LUC ET CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
@@ -143,7 +143,7 @@
             - cover.chambre_amis
         - if: "{{ not repeat.last }}"
           then:
-          - delay: '00:0:30'
+          - delay: '00:00:30'
   mode: single
 # ============================================================
 # [FERMETURE CHAMBRE MAITRE AVANT SOLEIL]
@@ -431,6 +431,7 @@
           entity_id: light.cote_luc
         data:
           brightness_pct: 100
+          transition: 1200
   mode: single
 
 # ============================================================
