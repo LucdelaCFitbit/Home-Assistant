@@ -385,16 +385,6 @@
   - action: script.night_shutdown_except_adresse
   mode: single
 
-# Meme sequence que l'automatisation aleatoire, mais sans delai pour un lancement immediat.
-- id: 'night_turn_off_all_lights_except_adresse'
-  alias: Lumiere | Nuit | Eteindre toutes les lumieres sauf Adresse maintenant
-  description: Eteint immediatement toutes les lumieres allumees sauf la zone Adresse, verrouille la porte et eteint la TV si necessaire.
-  triggers: []
-  conditions: []
-  actions:
-  - action: script.night_shutdown_except_adresse
-  mode: single
-
 # ============================================================
 # [HUE - Matin simulation aube cote Luc]
 # ============================================================
