@@ -1,76 +1,28 @@
 title: Pixel 9a
 views:
-  - title: Mobile
+  - title:  Pixel 9a | Maison 
     path: mobile
     icon: mdi:cellphone
     cards:
       - type: custom:mushroom-title-card
-        title: Maison
-        subtitle: Controle rapide Pixel 9a
 
-      - type: grid
-        title: Controle rapide Pixel 9a
-        columns: 2
-        square: false
-        cards:
-          - type: custom:mushroom-template-card
-            primary: Maison
-            secondary: "{{ 'Activé' if is_state('input_boolean.home_mode', 'on') else 'Désactivé' }}"
-            icon: mdi:home
-            icon_color: "{{ 'yellow' if is_state('input_boolean.home_mode', 'on') else 'disabled' }}"
-            entity: input_boolean.home_mode
-            tap_action:
-              action: toggle
-          - type: custom:mushroom-template-card
-            primary: Invite
-            secondary: "{{ 'Activé' if is_state('input_boolean.guest_mode', 'on') else 'Désactivé' }}"
-            icon: mdi:account-multiple
-            icon_color: "{{ 'yellow' if is_state('input_boolean.guest_mode', 'on') else 'disabled' }}"
-            entity: input_boolean.guest_mode
-            tap_action:
-              action: toggle
-          - type: custom:mushroom-template-card
-            primary: Andre
-            secondary: "{{ 'Activé' if is_state('input_boolean.andre_mode', 'on') else 'Désactivé' }}"
-            icon: mdi:account
-            icon_color: "{{ 'yellow' if is_state('input_boolean.andre_mode', 'on') else 'disabled' }}"
-            entity: input_boolean.andre_mode
-            tap_action:
-              action: toggle
-          - type: custom:mushroom-template-card
-            primary: Focus
-            secondary: "{{ 'Actif' if is_state('timer.focus_session', 'active') else 'Inactif' }}"
-            icon: mdi:timer
-            icon_color: "{{ 'yellow' if is_state('timer.focus_session', 'active') else 'disabled' }}"
-            entity: timer.focus_session
-            tap_action:
-              action: toggle
+      - type: custom:mushroom-template-card
+        primary: Controle rapide
+        secondary: Modes maison, invite, Andre, Focus…
+        icon: mdi:tune
+        icon_color: green
+        tap_action:
+          action: navigate
+          navigation_path: /pixel-9a/controle-rapide
 
-      - type: grid
-        title: Actions rapides
-        columns: 2
-        square: false
-        cards:
-          - type: custom:mushroom-template-card
-            primary: Bonne nuit
-            secondary: Lance la sequence de nuit
-            icon: mdi:weather-night
-            icon_color: deep-purple
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              target:
-                entity_id: script.night_shutdown_except_adresse
-          - type: custom:mushroom-template-card
-            primary: Verrouiller porte
-            secondary: Script securise
-            icon: mdi:lock
-            icon_color: indigo
-            tap_action:
-              action: call-service
-              service: script.turn_on
-              target:
-                entity_id: script.lock_porte_securise
+      - type: custom:mushroom-template-card
+        primary: Actions rapides
+        secondary: Bonne nuit, verrouiller porte…
+        icon: mdi:lightning-bolt
+        icon_color: orange
+        tap_action:
+          action: navigate
+          navigation_path: /pixel-9a/actions-rapides
 
       - type: grid
         title: Pièces
@@ -184,7 +136,7 @@ views:
           - type: custom:mushroom-template-card
             primary: Poules
             secondary: "{{ 'Allumé' if is_state('light.poulailler', 'on') else 'Éteint' }}"
-            icon: mdi:barn
+            icon: mdi:egg
             icon_color: "{{ 'yellow' if is_state('light.poulailler', 'on') else 'disabled' }}"
             entity: light.poulailler
             tap_action:
@@ -213,7 +165,6 @@ views:
             collapsible_controls: true
 
       - type: grid
-        title: Stores
         columns: 1
         square: false
         cards:
@@ -242,6 +193,86 @@ views:
           - entity: lock.porte
           - entity: weather.forecast_maison
           - entity: input_select.house_profile
+
+  - title: Controle rapide
+    path: controle-rapide
+    icon: mdi:tune
+    subview: true
+    cards:
+      - type: custom:mushroom-title-card
+        title: Controle rapide
+        subtitle: Modes et minuteries
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Maison
+            secondary: "{{ 'Activé' if is_state('input_boolean.home_mode', 'on') else 'Désactivé' }}"
+            icon: mdi:home
+            icon_color: "{{ 'yellow' if is_state('input_boolean.home_mode', 'on') else 'disabled' }}"
+            entity: input_boolean.home_mode
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Invite
+            secondary: "{{ 'Activé' if is_state('input_boolean.guest_mode', 'on') else 'Désactivé' }}"
+            icon: mdi:account-multiple
+            icon_color: "{{ 'yellow' if is_state('input_boolean.guest_mode', 'on') else 'disabled' }}"
+            entity: input_boolean.guest_mode
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Andre
+            secondary: "{{ 'Activé' if is_state('input_boolean.andre_mode', 'on') else 'Désactivé' }}"
+            icon: mdi:account
+            icon_color: "{{ 'yellow' if is_state('input_boolean.andre_mode', 'on') else 'disabled' }}"
+            entity: input_boolean.andre_mode
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Focus
+            secondary: "{{ 'Actif' if is_state('timer.focus_session', 'active') else 'Inactif' }}"
+            icon: mdi:timer
+            icon_color: "{{ 'yellow' if is_state('timer.focus_session', 'active') else 'disabled' }}"
+            entity: timer.focus_session
+            tap_action:
+              action: toggle
+
+  - title: Actions rapides
+    path: actions-rapides
+    icon: mdi:lightning-bolt
+    subview: true
+    cards:
+      - type: custom:mushroom-title-card
+        title: Actions rapides
+        subtitle: Confirmez votre action
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Bonne nuit
+            secondary: Lance la sequence de nuit
+            icon: mdi:weather-night
+            icon_color: deep-purple
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.night_shutdown_except_adresse
+          - type: custom:mushroom-template-card
+            primary: Verrouiller porte
+            secondary: Script securise
+            icon: mdi:lock
+            icon_color: indigo
+            tap_action:
+              action: call-service
+              service: script.turn_on
+              target:
+                entity_id: script.lock_porte_securise
 
   - title: Stores
     path: stores

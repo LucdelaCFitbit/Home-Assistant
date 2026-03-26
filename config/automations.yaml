@@ -449,6 +449,40 @@
   mode: restart
 
 # ============================================================
+# [HUE - Matin simulation aube cote Luc - MANUEL]
+# ============================================================
+# Version manuelle sans contrainte d'heure ni de jour.
+# Lance la séquence complète : ambre faible (30min), plus clair (30min), extinction.
+- id: 'matin_reveille_aube_cote_luc_manuel'
+  alias: "Lumiere | Réveil : Aube Matinale - Chambre (Manuel)"
+  description: "Simulation aube douce Hue déclenchée manuellement : ambre faible 30min, plus clair 30min, extinction."
+  triggers: []
+  conditions: []
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.cote_luc
+    data:
+      brightness_pct: 6
+      color_temp_kelvin: 2000
+      transition: 1800
+  - delay: '00:30:00'
+  - action: light.turn_on
+    target:
+      entity_id: light.cote_luc
+    data:
+      brightness_pct: 45
+      color_temp_kelvin: 2700
+      transition: 1800
+  - delay: '00:30:00'
+  - action: light.turn_off
+    target:
+      entity_id: light.cote_luc
+    data:
+      transition: 20
+  mode: single
+
+# ============================================================
 # [CUISINE - ARMOIRE MATIN SAISONNIER]
 # ============================================================
 # De novembre a avril, active la scene Cuisine Nouveau scenario
