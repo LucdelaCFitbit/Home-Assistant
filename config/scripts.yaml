@@ -69,13 +69,7 @@ night_shutdown_except_adresse:
   sequence:
   - action: script.lock_porte_securise
   - action: script.turn_off_all_lights_except_adresse
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: media_player.tele_qn50ls03aafxzc
-        state: 'on'
-      sequence:
-      - action: media_player.turn_off
-        target:
-          entity_id: media_player.tele_qn50ls03aafxzc
+  - action: media_player.turn_off
+    target:
+      entity_id: media_player.tele_qn50ls03aafxzc
   mode: single
