@@ -13,6 +13,8 @@ Always consider this workspace as a Home Assistant environment running on Home A
 - Operating System: 17.1
 - Frontend: 20260312.0
 - Companion app: 2026.3.2-full (20802)
+- TV: Samsung The Frame (Art Mode in use)
+- Art Mode behavior: non-zero power draw is expected in Art Mode; distinguish Art Mode from true TV-watching ON state.
 
 ## Response Rules For This Workspace
 - Prioritize Home Assistant best practices for YAML scripts, automations, helpers, and dashboard configuration.

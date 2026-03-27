@@ -48,7 +48,7 @@
 # Cibles: bureau, chambre ami, salle a manger (porte_patio), salon.
 - id: 'open_covers_winter_sun_else_7am'
   alias: Store | Ouverture saisonniere bureau Luc, chambre ami, salle a manger, salon
-  description: En hiver ouvre au lever du soleil, sinon ouvre à 07:00. 3 essais espacés de 1 minute.
+  description: En hiver ouvre au lever du soleil, sinon ouvre à 07:00. 4 essais espacés de 1 minute, y compris le salon a +15 min.
   triggers:
   - trigger: sun
     event: sunrise
@@ -73,7 +73,7 @@
         value_template: "{{ now().month not in [11, 12, 1, 2] }}"
   actions:
   - repeat:
-      count: 3
+      count: 4
       sequence:
       - action: cover.open_cover
         target:
@@ -85,9 +85,15 @@
         then:
         - delay: '00:01:00'
   - delay: '00:15:00'
-  - action: cover.open_cover
-    target:
-      entity_id: cover.salon
+  - repeat:
+      count: 4
+      sequence:
+      - action: cover.open_cover
+        target:
+          entity_id: cover.salon
+      - if: "{{ not repeat.last }}"
+        then:
+        - delay: '00:01:00'
   mode: single
 # # ============================================================
 # # FIN SECTION
@@ -652,14 +658,12 @@
   triggers:
     - trigger: state
       entity_id: binary_sensor.etat_tv_active
-      from: 'off'
       to: 'on'
       for:
         seconds: 15
       id: "tv_on"
     - trigger: state
       entity_id: binary_sensor.etat_tv_active
-      from: 'on'
       to: 'off'
       for:
         seconds: 15

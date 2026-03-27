@@ -15,6 +15,8 @@ Use this context before answering:
 - OS: 17.1
 - Frontend: 20260312.0
 - Companion app: 2026.3.2-full (20802)
+- TV: Samsung The Frame (has Art Mode)
+- Art Mode behavior: TV still draws non-zero power in Art Mode; treat Art Mode separately from true TV-watching ON state.
 
 Authoring rules for YAML:
 - Produce valid YAML with consistent indentation.
