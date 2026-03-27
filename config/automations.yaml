@@ -431,7 +431,7 @@
         data:
           brightness_pct: 6
           color_temp_kelvin: 2000
-          transition: 1800
+          transition: 900
     - conditions:
       - condition: trigger
         id: dawn_warm_mid
