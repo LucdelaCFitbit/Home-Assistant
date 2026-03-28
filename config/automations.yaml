@@ -1,4 +1,4 @@
-﻿# ============================================================
+# ============================================================
 # AUTOMATIONS HOME ASSISTANT
 # ============================================================
 # Convention:
@@ -95,32 +95,7 @@
         then:
         - delay: '00:01:00'
   mode: single
-# # ============================================================
-# # FIN SECTION
-# # [SECTION AVEC ANDRE_MODE OU INVITE_MODE ACTIF, ON NE FERME PAS LES STORES SALON/SALLE A MANGER]
-# # ============================================================
-# # ============================================================
-# # [OUVERTURE BUREAU LUC ET CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
-# # ============================================================
-# # Ouvre les stores du bureau Luc et de la chambre ami au lever du soleil, puis répète après 1 et 2 minutes.
-# - id: 'sunrise_open_bureau_luc_with_repeats'
-#   alias: Store |Bureau Luc et Chambre Ami | Ouvrir stores au lever du soleil (4 fois)
-#   description: Ouvre les stores du bureau Luc et de la chambre ami au lever du soleil et répète l'action 4 fois au total.
-#   triggers:
-#     - trigger: sun
-#       event: sunrise
-#   conditions: []
-#   actions:
-#     - repeat:
-#         count: 4
-#         sequence:
-#           - action: cover.open_cover
-#             target:
-#               entity_id:
-#                 - cover.bureau
-#                 - cover.chambre_amis
-#           - delay: '00:00:30' # Attend 30 secondes avant la prochaine répétition
-#   mode: single
+
 # ============================================================
 # [FERMETURE BUREAU LUC ET CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
@@ -351,13 +326,32 @@
 # ============================================================
 # A 19:00, les lumieres de salle a manger passent progressivement
 # en mode attenue sur 30 minutes si andre_mode OU guest_mode est OFF.
-- id: 'dining_room_progressive_dim_19h_if_mode_off'
-  alias: Lumiere | Salle a manger | Passage progressif en attenue a 19:00
-  description: A 19:00, attenue la salle a manger sur 30 min si andre_mode ou guest_mode est OFF.
+- id: 'rezchausse_progressive_dim_if_mode_off'
+  alias: Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  description: De novembre a avril, attenue a 19:30. De mai a octobre, attenue 1h apres le coucher du soleil, si andre_mode ou guest_mode est OFF.
   triggers:
   - trigger: time
-    at: '19:00:00'
+    at: '19:30:00'
+    id: nov_apr_1930
+  - trigger: sun
+    event: sunset
+    offset: '01:00:00'
+    id: may_oct_sunset_plus_1h
   conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: nov_apr_1930
+      - condition: template
+        value_template: "{{ now().month in [11, 12, 1, 2, 3, 4] }}"
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: may_oct_sunset_plus_1h
+      - condition: template
+        value_template: "{{ now().month in [5, 6, 7, 8, 9, 10] }}"
   - condition: or
     conditions:
     - condition: state
@@ -369,11 +363,41 @@
   actions:
   - action: light.turn_on
     target:
-      entity_id: light.salle_a_manger
+      area_id:
+      - salon
+      - foyer
+      - salle_a_manger
     data:
       brightness_pct: 35
       transition: 1800
+  - action: scene.turn_on
+    target:
+      entity_id: scene.cuisine_detente
   mode: single
+
+# ============================================================
+# [LUMIERE - ON SALON, FOYER, SALLE A MANGER ET CUISINE]
+# ============================================================
+# Allume les lumieres 45 minutes avant le coucher du soleil
+# en utilisant le scenario concentration a 100%.
+- id: 'lights_on_salon_foyer_dining_kitchen_45min_before_sunset'
+  alias: Lumiere | ON Salon, Foyer, Salle a manger et cuisine
+  description: Active le scenario concentration a 100% 45 minutes avant le coucher du soleil.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-00:45:00'
+  conditions: []
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id:
+      - scene.salon_concentration
+      - scene.foyer_concentration
+      - scene.salle_a_manger_concentration
+      - scene.cuisine_concentration
+  mode: single
+
 # ============================================================
 # [NUIT - ETEINDRE TOUTES LES LUMIERES SAUF ADRESSE]
 # ============================================================
@@ -674,6 +698,28 @@
         title: "Salon | Samsung"
         message: >
           {{ 'La TV est allumée depuis 15s' if trigger.id == 'tv_on' else 'La TV est éteinte/Art depuis 15s' }}
+  mode: single
+
+- id: 'notification_remote_tv_pixel9a'
+  alias: "TV | Notification | Pixel 9a via remote.tv"
+  description: "Envoie TV ON/OFF sur le Pixel 9a selon l'état de remote.tv"
+  triggers:
+    - trigger: state
+      entity_id: remote.tv
+      to: 'on'
+      id: tv_on
+    - trigger: state
+      entity_id: remote.tv
+      to: 'off'
+      id: tv_off
+  conditions: []
+  actions:
+    - action: notify.mobile_app_lucdelac
+      data:
+        title: "Salon | Remote TV"
+        message: >-
+          {{ 'TV ON' if trigger.id == 'tv_on' else 'TV OFF' }}
+          | Activite: {{ state_attr('remote.tv', 'current_activity') | default('unknown', true) }}
   mode: single
 
 
