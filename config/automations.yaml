@@ -351,15 +351,6 @@
       entity_id: input_boolean.guest_mode
       state: 'off'
   actions:
-  - action: light.turn_on
-    target:
-      area_id:
-      - salon
-      - foyer
-      - salle_a_manger
-    data:
-      brightness_pct: 35
-      transition: 1800
   - action: scene.turn_on
     target:
       entity_id: scene.cuisine_detente
