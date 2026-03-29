@@ -350,7 +350,18 @@
     - condition: state
       entity_id: input_boolean.guest_mode
       state: 'off'
+  - condition: state
+    entity_id: remote.tv
+    state: 'off'
   actions:
+  - action: scene.turn_on
+    target:
+      entity_id: scene.salon_detente
+  - action: scene.turn_on
+    target:
+      entity_id:
+      - scene.foyer_rest
+      - scene.salle_a_manger_rest
   - action: scene.turn_on
     target:
       entity_id: scene.cuisine_detente
