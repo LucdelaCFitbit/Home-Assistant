@@ -106,12 +106,6 @@
   triggers:
   - trigger: sun
     event: sunset
-  - trigger: sun
-    event: sunset
-    offset: '00:01:00'
-  - trigger: sun
-    event: sunset
-    offset: '00:02:00'
   conditions: []
   actions:
     - repeat:
@@ -667,51 +661,26 @@
         Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
   mode: single
 
-# TEST - NOTIFICATION - PIXEL 9a
-- id: 'notification_the_frame_stable'
-  alias: "Test | Notification | Statut TV (Stable 15s)"
-  description: "Alerte le Pixel 9a uniquement si l'état est stable pendant 15 secondes"
-  triggers:
-    - trigger: state
-      entity_id: binary_sensor.etat_tv_active
-      to: 'on'
-      for:
-        seconds: 15
-      id: "tv_on"
-    - trigger: state
-      entity_id: binary_sensor.etat_tv_active
-      to: 'off'
-      for:
-        seconds: 15
-      id: "tv_off"
-  actions:
-    - action: notify.mobile_app_lucdelac
-      data:
-        title: "Salon | Samsung"
-        message: >
-          {{ 'La TV est allumée depuis 15s' if trigger.id == 'tv_on' else 'La TV est éteinte/Art depuis 15s' }}
-  mode: single
-
-- id: 'notification_remote_tv_pixel9a'
-  alias: "TV | Notification | Pixel 9a via remote.tv"
-  description: "Envoie TV ON/OFF sur le Pixel 9a selon l'état de remote.tv"
-  triggers:
-    - trigger: state
-      entity_id: remote.tv
-      to: 'on'
-      id: tv_on
-    - trigger: state
-      entity_id: remote.tv
-      to: 'off'
-      id: tv_off
-  conditions: []
-  actions:
-    - action: notify.mobile_app_lucdelac
-      data:
-        title: "Salon | Remote TV"
-        message: >-
-          {{ 'TV ON' if trigger.id == 'tv_on' else 'TV OFF' }}
-          | Activite: {{ state_attr('remote.tv', 'current_activity') | default('unknown', true) }}
-  mode: single
+# - id: 'notification_remote_tv_pixel9a'
+#   alias: "TV | Notification | Pixel 9a via remote.tv"
+#   description: "Envoie TV ON/OFF sur le Pixel 9a selon l'état de remote.tv"
+#   triggers:
+#     - trigger: state
+#       entity_id: remote.tv
+#       to: 'on'
+#       id: tv_on
+#     - trigger: state
+#       entity_id: remote.tv
+#       to: 'off'
+#       id: tv_off
+#   conditions: []
+#   actions:
+#     - action: notify.mobile_app_lucdelac
+#       data:
+#         title: "Salon | Remote TV"
+#         message: >-
+#           {{ 'TV ON' if trigger.id == 'tv_on' else 'TV OFF' }}
+#           | Activite: {{ state_attr('remote.tv', 'current_activity') | default('unknown', true) }}
+#   mode: single
 
 
