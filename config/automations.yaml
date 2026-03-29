@@ -529,7 +529,7 @@
 # ============================================================
 # Automatisation de test a lancer manuellement pour desactiver le motion d'entree.
 - id: 'test_manual_disable_entry_motion'
-  alias: Test Manuel | Desactiver motion entree
+  alias: ZZ Test Manuel | Desactiver motion entree
   description: Desactive le capteur de mouvement d'entree (lancement manuel).
   triggers: []
   conditions: []
@@ -540,7 +540,7 @@
   mode: single
 # Automatisation de test a lancer manuellement pour activer le motion d'entree.
 - id: 'test_manual_enable_entry_motion'
-  alias: Test | Manuel | Activer motion entree
+  alias: ZZ Test Manuel | Activer motion entree
   description: Active le capteur de mouvement d'entree (lancement manuel).
   triggers: []
   conditions: []
@@ -554,7 +554,7 @@
 # ============================================================
 # A 15:30, envoie un message vocal sur le Google Nest Hub de Bureau Luc.
 - id: 'test_bureau_luc_voice_1530'
-  alias: Test | Bureau Luc | Message vocal 15h30
+  alias: ZZ Test | Bureau Luc | Message vocal 15h30
   description: A 15:30, diffuse Bonne fin de journée Luc sur Bureau Luc Google Nest Hub.
   triggers:
   - trigger: time
@@ -573,7 +573,7 @@
 # ============================================================
 # A 15:30, envoie un message vocal sur le Google Nest Hub de Bureau Luc.
 - id: 'test_bureau_luc_diffuse_meteo'
-  alias: Test | Bureau Luc | Message vocal Meteo demain
+  alias: ZZ Test | Bureau Luc | Message vocal Meteo demain
   description: A 15:30, diffuse la meteo de demain sur Bureau Luc Google Nest Hub.
   triggers:
   - trigger: time
@@ -619,7 +619,7 @@
 # ============================================================
 # Test manuel: style plus conversationnel, facon assistant vocal.
 - id: 'test_bureau_luc_diffuse_meteo_google_like'
-  alias: Test | Bureau Luc | Message vocal Meteo demain Google-like
+  alias: ZZ Test | Bureau Luc | Message vocal Meteo demain Google-like
   description: Test manuel, diffuse la meteo de demain avec formulation conversationnelle.
   triggers: []
   conditions: []
