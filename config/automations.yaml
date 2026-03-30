@@ -265,12 +265,29 @@
               entity_id:
                 - light.entree_2
                 - light.salle_a_manger
-              area_id: foyer
+          - action: scene.turn_on
+            target:
+              entity_id:
+                - scene.foyer_rest
+                - scene.salon_detente
           - action: light.turn_on
             target:
-              area_id: salon
+              area_id:
+                - foyer
+                - salon
             data:
               brightness_pct: 15
+          - action: homeassistant.turn_off
+            data:
+              entity_id: >-
+                {{
+                  expand(area_entities('foyer') + area_entities('salon'))
+                  | selectattr('domain', 'eq', 'light')
+                  | map(attribute='entity_id')
+                  | reject('in', ['light.salon_2', 'light.salon_3'])
+                  | list
+                }}
+              transition: 20
           - action: scene.turn_on
             target:
               entity_id: scene.cuisine_rest
@@ -660,6 +677,35 @@
         {% set pluie = f.precipitation_probability | default(none) %}
         Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
   mode: single
+
+# ============================================================
+# [BUREAU LUC - TRANSITION CONCENTRATION VERS DETENTE PUIS EXTINCTION]
+# ============================================================
+# Quand la scene Concentration de Bureau Luc est activee,
+# attend 10 secondes, passe en Détente a 100%, puis diminue jusqu'a extinction en 1 minute.
+- id: 'bureau_luc_concentration_to_detente_then_off'
+  alias: Lumiere | Bureau Luc | Concentration 10s puis Detente 100% et extinction 1 min
+  description: Sequence Bureau Luc - Concentration, puis Detente 100%, puis extinction progressive sur 1 minute.
+  triggers:
+  - trigger: state
+    entity_id: scene.bureau_luc_concentration
+  conditions: []
+  actions:
+  - delay: '00:00:10'
+  - action: scene.turn_on
+    target:
+      entity_id: scene.bureau_luc_detente
+  - action: light.turn_on
+    target:
+      entity_id: light.bureau_luc
+    data:
+      brightness_pct: 100
+  - action: light.turn_off
+    target:
+      entity_id: light.bureau_luc
+    data:
+      transition: 20
+  mode: restart
 
 # - id: 'notification_remote_tv_pixel9a'
 #   alias: "TV | Notification | Pixel 9a via remote.tv"
