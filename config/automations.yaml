@@ -196,7 +196,7 @@
               entity_id: cover.bureau
             data:
               position: 75
-          - delay: '00:00:15' # Attend 1 minute avant la prochaine répétition
+          - delay: '00:00:15' # Attend 15 secondes avant la prochaine répétition
   mode: single
 
 
@@ -205,7 +205,7 @@
 # ============================================================
 # Si la serrure d'entree reste debarree pendant 15 minutes,
 # elle est rebarree automatiquement.
-- id: 'entry_lock_auto_relock_after_5min'
+- id: 'entry_lock_auto_relock_after_15min'
   alias: "Serrure | Entree | Rebarre serrure apres 15 min debarree"
   trigger:
     - trigger: state
@@ -257,51 +257,14 @@
             entity_id: input_boolean.guest_mode
             state: 'off'
         sequence:
-          - variables:
-              salon_brightness_pct: >-
-                {% set salon_lights = expand(area_entities('salon'))
-                  | selectattr('domain', 'eq', 'light')
-                  | selectattr('state', 'eq', 'on')
-                  | list %}
-                {% set salon_brightness = salon_lights
-                  | map(attribute='attributes.brightness')
-                  | reject('equalto', none)
-                  | list %}
-                {% if salon_brightness | count > 0 %}
-                  {{ ((salon_brightness | sum / (salon_brightness | count)) / 255 * 100) | round(0) }}
-                {% else %}
-                  30
-                {% endif %}
-              foyer_brightness_pct: >-
-                {% set foyer_lights = expand(area_entities('foyer'))
-                  | selectattr('domain', 'eq', 'light')
-                  | selectattr('state', 'eq', 'on')
-                  | list %}
-                {% set foyer_brightness = foyer_lights
-                  | map(attribute='attributes.brightness')
-                  | reject('equalto', none)
-                  | list %}
-                {% if foyer_brightness | count > 0 %}
-                  {{ ((foyer_brightness | sum / (foyer_brightness | count)) / 255 * 100) | round(0) }}
-                {% else %}
-                  30
-                {% endif %}
-          - action: scene.turn_on
-            target:
-              entity_id: scene.foyer_rest
-          - action: light.turn_on
-            target:
+          - action: script.apply_scene_with_current_area_brightness
+            data:
               area_id: foyer
+              scene_entity: scene.foyer_rest
+          - action: script.apply_scene_with_current_area_brightness
             data:
-              brightness_pct: "{{ foyer_brightness_pct | int }}"
-          - action: scene.turn_on
-            target:
-              entity_id: scene.salon_detente
-          - action: light.turn_on
-            target:
               area_id: salon
-            data:
-              brightness_pct: "{{ salon_brightness_pct | int }}"
+              scene_entity: scene.salon_detente
           - parallel:
               - action: light.turn_off
                 target:
@@ -367,51 +330,14 @@
   triggers: []
   conditions: []
   actions:
-    - variables:
-        salon_brightness_pct: >-
-          {% set salon_lights = expand(area_entities('salon'))
-             | selectattr('domain', 'eq', 'light')
-             | selectattr('state', 'eq', 'on')
-             | list %}
-          {% set salon_brightness = salon_lights
-             | map(attribute='attributes.brightness')
-             | reject('equalto', none)
-             | list %}
-          {% if salon_brightness | count > 0 %}
-            {{ ((salon_brightness | sum / (salon_brightness | count)) / 255 * 100) | round(0) }}
-          {% else %}
-            30
-          {% endif %}
-        foyer_brightness_pct: >-
-          {% set foyer_lights = expand(area_entities('foyer'))
-             | selectattr('domain', 'eq', 'light')
-             | selectattr('state', 'eq', 'on')
-             | list %}
-          {% set foyer_brightness = foyer_lights
-             | map(attribute='attributes.brightness')
-             | reject('equalto', none)
-             | list %}
-          {% if foyer_brightness | count > 0 %}
-            {{ ((foyer_brightness | sum / (foyer_brightness | count)) / 255 * 100) | round(0) }}
-          {% else %}
-            30
-          {% endif %}
-    - action: scene.turn_on
-      target:
-        entity_id: scene.foyer_rest
-    - action: light.turn_on
-      target:
+    - action: script.apply_scene_with_current_area_brightness
+      data:
         area_id: foyer
+        scene_entity: scene.foyer_rest
+    - action: script.apply_scene_with_current_area_brightness
       data:
-        brightness_pct: "{{ foyer_brightness_pct | int }}"
-    - action: scene.turn_on
-      target:
-        entity_id: scene.salon_detente
-    - action: light.turn_on
-      target:
         area_id: salon
-      data:
-        brightness_pct: "{{ salon_brightness_pct | int }}"
+        scene_entity: scene.salon_detente
     - parallel:
         - action: light.turn_off
           target:
@@ -435,9 +361,9 @@
             transition: 20
   mode: restart
 # ============================================================
-# [SALLE A MANGER - ATTENUATION PROGRESSIVE 19H]
+# [REZ DE CHAUSSEE - ATTENUATION PROGRESSIVE 19H]
 # ============================================================
-# A 19:00, les lumieres de salle a manger passent progressivement
+# A 19:00, les lumieres du REZ DE CHAUSSEE passent progressivement
 # en mode attenue sur 30 minutes si andre_mode OU guest_mode est OFF.
 - id: 'rezchausse_progressive_dim_if_mode_off'
   alias: Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
@@ -477,17 +403,32 @@
     entity_id: remote.tv
     state: 'off'
   actions:
-  - action: scene.turn_on
+  - action: script.apply_scene_with_current_area_brightness
+    data:
+      area_id: foyer
+      scene_entity: scene.foyer_rest
+  - action: script.apply_scene_with_current_area_brightness
+    data:
+      area_id: salon
+      scene_entity: scene.salon_detente
+  - action: script.apply_scene_with_current_area_brightness
+    data:
+      area_id: salle_a_manger
+      scene_entity: scene.salle_a_manger_rest
+  - action: script.apply_scene_with_current_area_brightness
+    data:
+      area_id: cuisine
+      scene_entity: scene.cuisine_detente
+  - action: light.turn_on
     target:
-      entity_id: scene.salon_detente
-  - action: scene.turn_on
-    target:
-      entity_id:
-      - scene.foyer_rest
-      - scene.salle_a_manger_rest
-  - action: scene.turn_on
-    target:
-      entity_id: scene.cuisine_detente
+      area_id:
+      - salon
+      - foyer
+      - salle_a_manger
+      - cuisine
+    data:
+      brightness_pct: 30
+      transition: 7200
   mode: single
 
 # ============================================================
@@ -511,6 +452,15 @@
       - scene.foyer_concentration
       - scene.salle_a_manger_concentration
       - scene.cuisine_concentration
+  - action: light.turn_on
+    target:
+      area_id:
+      - salon
+      - foyer
+      - salle_a_manger
+      - cuisine
+    data:
+      brightness_pct: 100
   mode: single
 
 # ============================================================
@@ -697,52 +647,7 @@
       media_player_entity_id: media_player.luc
       message: 'Bonne fin de journée Luc'
   mode: single
-# ============================================================
-# [TEST BUREAU LUC - MESSAGE VOCAL Meteo DEMAIN]
-# ============================================================
-# A 15:30, envoie un message vocal sur le Google Nest Hub de Bureau Luc.
-- id: 'test_bureau_luc_diffuse_meteo'
-  alias: ZZ Test | Bureau Luc | Message vocal Meteo demain
-  description: A 15:30, diffuse la meteo de demain sur Bureau Luc Google Nest Hub.
-  triggers:
-  - trigger: time
-    at: '15:30:00'
-  conditions: []
-  actions:
-  - action: weather.get_forecasts
-    target:
-      entity_id: weather.forecast_maison
-    data:
-      type: daily
-    response_variable: meteo_demain
-  - action: tts.speak
-    target:
-      entity_id: tts.google_translate_fr_ca
-    data:
-      media_player_entity_id: media_player.luc
-      message: >-
-          {% set f = meteo_demain['weather.forecast_maison'].forecast[0] %}
-          {% set condition_map = {
-            'clear-night': 'ciel degage',
-            'cloudy': 'nuageux',
-            'exceptional': 'conditions exceptionnelles',
-            'fog': 'brumeux',
-            'hail': 'de la grele',
-            'lightning': 'des orages',
-            'lightning-rainy': 'des orages avec pluie',
-            'partlycloudy': 'partiellement nuageux',
-            'pouring': 'de fortes pluies',
-            'rainy': 'pluvieux',
-            'snowy': 'neigeux',
-            'snowy-rainy': 'neige fondante',
-            'sunny': 'ensoleille',
-            'windy': 'venteux',
-            'windy-variant': 'venteux avec eclaircies'
-          } %}
-          {% set cond = condition_map.get(f.condition, f.condition) %}
-          {% set pluie = f.precipitation_probability | default(none) %}
-          Demain: {{ cond }}, maximum {{ f.temperature | round(0) }} degres, minimum {{ f.templow | round(0) }} degres{% if pluie is not none %}, risque de pluie {{ pluie | round(0) }} pour cent{% endif %}.
-  mode: single
+
 # ============================================================
 # [TEST BUREAU LUC - MESSAGE VOCAL Meteo DEMAIN GOOGLE-LIKE]
 # ============================================================
@@ -789,35 +694,6 @@
         {% set pluie = f.precipitation_probability | default(none) %}
         Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
   mode: single
-
-# ============================================================
-# [BUREAU LUC - TRANSITION CONCENTRATION VERS DETENTE PUIS EXTINCTION]
-# ============================================================
-# Quand la scene Concentration de Bureau Luc est activee,
-# attend 10 secondes, passe en Détente a 100%, puis diminue jusqu'a extinction en 1 minute.
-- id: 'bureau_luc_concentration_to_detente_then_off'
-  alias: Lumiere | Bureau Luc | Concentration 10s puis Detente 100% et extinction 1 min
-  description: Sequence Bureau Luc - Concentration, puis Detente 100%, puis extinction progressive sur 1 minute.
-  triggers:
-  - trigger: state
-    entity_id: scene.bureau_luc_concentration
-  conditions: []
-  actions:
-  - delay: '00:00:10'
-  - action: scene.turn_on
-    target:
-      entity_id: scene.bureau_luc_detente
-  - action: light.turn_on
-    target:
-      entity_id: light.bureau_luc
-    data:
-      brightness_pct: 100
-  - action: light.turn_off
-    target:
-      entity_id: light.bureau_luc
-    data:
-      transition: 20
-  mode: restart
 
 # - id: 'notification_remote_tv_pixel9a'
 #   alias: "TV | Notification | Pixel 9a via remote.tv"

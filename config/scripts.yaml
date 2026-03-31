@@ -5,6 +5,43 @@
   - action: input_boolean.turn_on
     target:
       entity_id: input_boolean.home_mode
+apply_scene_with_current_area_brightness:
+  alias: Lumiere | Appliquer scene et conserver brightness zone
+  description: Calcule la luminosite moyenne des lumieres allumees d'une zone, applique la scene puis restaure ce brightness.
+  fields:
+    area_id:
+      description: Identifiant de la zone Home Assistant (ex. salon, foyer).
+      example: salon
+      required: true
+    scene_entity:
+      description: Entite scene a appliquer.
+      example: scene.salon_detente
+      required: true
+  sequence:
+  - variables:
+      area_brightness_pct: >-
+        {% set area_lights = expand(area_entities(area_id))
+          | selectattr('domain', 'eq', 'light')
+          | selectattr('state', 'eq', 'on')
+          | list %}
+        {% set area_brightness = area_lights
+          | map(attribute='attributes.brightness')
+          | reject('equalto', none)
+          | list %}
+        {% if area_brightness | count > 0 %}
+          {{ ((area_brightness | sum / (area_brightness | count)) / 255 * 100) | round(0) }}
+        {% else %}
+          30
+        {% endif %}
+  - action: scene.turn_on
+    target:
+      entity_id: "{{ scene_entity }}"
+  - action: light.turn_on
+    target:
+      area_id: "{{ area_id }}"
+    data:
+      brightness_pct: "{{ area_brightness_pct | int }}"
+  mode: parallel
 set_home_mode_off:
   alias: Set Home Mode Off
   description: Desactive le mode maison
@@ -52,9 +89,8 @@ turn_off_all_lights_except_adresse:
   alias: Lumiere | Eteindre toutes les lumieres sauf Adresse
   description: Eteint toutes les lumieres allumees sauf celles de la zone Adresse.
   sequence:
-  - action: light.turn_off
-    target:
-      entity_id: >-
+  - variables:
+      lights_to_turn_off: >-
         {{
           states.light
           | selectattr('state', 'eq', 'on')
@@ -62,6 +98,11 @@ turn_off_all_lights_except_adresse:
           | reject('in', area_entities('adresse'))
           | list
         }}
+  - condition: template
+    value_template: "{{ lights_to_turn_off | count > 0 }}"
+  - action: light.turn_off
+    target:
+      entity_id: "{{ lights_to_turn_off }}"
   mode: single
 night_shutdown_except_adresse:
   alias: Nuit | Extinction sauf Adresse
