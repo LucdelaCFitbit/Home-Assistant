@@ -257,37 +257,72 @@
             entity_id: input_boolean.guest_mode
             state: 'off'
         sequence:
-          - action: switch.turn_off
-            target:
-              entity_id: switch.motion_entre_capteur_de_mouvement
-          - action: light.turn_off
-            target:
-              entity_id:
-                - light.entree_2
-                - light.salle_a_manger
+          - variables:
+              salon_brightness_pct: >-
+                {% set salon_lights = expand(area_entities('salon'))
+                  | selectattr('domain', 'eq', 'light')
+                  | selectattr('state', 'eq', 'on')
+                  | list %}
+                {% set salon_brightness = salon_lights
+                  | map(attribute='attributes.brightness')
+                  | reject('equalto', none)
+                  | list %}
+                {% if salon_brightness | count > 0 %}
+                  {{ ((salon_brightness | sum / (salon_brightness | count)) / 255 * 100) | round(0) }}
+                {% else %}
+                  30
+                {% endif %}
+              foyer_brightness_pct: >-
+                {% set foyer_lights = expand(area_entities('foyer'))
+                  | selectattr('domain', 'eq', 'light')
+                  | selectattr('state', 'eq', 'on')
+                  | list %}
+                {% set foyer_brightness = foyer_lights
+                  | map(attribute='attributes.brightness')
+                  | reject('equalto', none)
+                  | list %}
+                {% if foyer_brightness | count > 0 %}
+                  {{ ((foyer_brightness | sum / (foyer_brightness | count)) / 255 * 100) | round(0) }}
+                {% else %}
+                  30
+                {% endif %}
           - action: scene.turn_on
             target:
-              entity_id:
-                - scene.foyer_rest
-                - scene.salon_detente
+              entity_id: scene.foyer_rest
           - action: light.turn_on
             target:
-              area_id:
-                - foyer
-                - salon
+              area_id: foyer
             data:
-              brightness_pct: 15
-          - action: homeassistant.turn_off
+              brightness_pct: "{{ foyer_brightness_pct | int }}"
+          - action: scene.turn_on
+            target:
+              entity_id: scene.salon_detente
+          - action: light.turn_on
+            target:
+              area_id: salon
             data:
-              entity_id: >-
-                {{
-                  expand(area_entities('foyer') + area_entities('salon'))
-                  | selectattr('domain', 'eq', 'light')
-                  | map(attribute='entity_id')
-                  | reject('in', ['light.salon_2', 'light.salon_3'])
-                  | list
-                }}
-              transition: 20
+              brightness_pct: "{{ salon_brightness_pct | int }}"
+          - parallel:
+              - action: light.turn_off
+                target:
+                  area_id: foyer
+                data:
+                  transition: 20
+              - action: light.turn_off
+                target:
+                  entity_id:
+                    - light.salon_1
+                    - light.salon_4
+                data:
+                  transition: 20
+              - action: light.turn_on
+                target:
+                  entity_id:
+                    - light.salon_2
+                    - light.salon_3
+                data:
+                  brightness_pct: 30
+                  transition: 20
           - action: scene.turn_on
             target:
               entity_id: scene.cuisine_rest
@@ -321,6 +356,83 @@
           - action: switch.turn_on
             target:
               entity_id: switch.motion_entre_capteur_de_mouvement
+  mode: restart
+
+# ============================================================
+# [TEST LUMIERES MODE TV SALON]
+# ============================================================
+- id: 'living_room_google_tv_mode_test_lights_tv_on'
+  alias: AA TV | Salon | Test lumieres TV ON
+  description: Test des transitions lumieres salon et foyer au declenchement TV ON.
+  triggers: []
+  conditions: []
+  actions:
+    - variables:
+        salon_brightness_pct: >-
+          {% set salon_lights = expand(area_entities('salon'))
+             | selectattr('domain', 'eq', 'light')
+             | selectattr('state', 'eq', 'on')
+             | list %}
+          {% set salon_brightness = salon_lights
+             | map(attribute='attributes.brightness')
+             | reject('equalto', none)
+             | list %}
+          {% if salon_brightness | count > 0 %}
+            {{ ((salon_brightness | sum / (salon_brightness | count)) / 255 * 100) | round(0) }}
+          {% else %}
+            30
+          {% endif %}
+        foyer_brightness_pct: >-
+          {% set foyer_lights = expand(area_entities('foyer'))
+             | selectattr('domain', 'eq', 'light')
+             | selectattr('state', 'eq', 'on')
+             | list %}
+          {% set foyer_brightness = foyer_lights
+             | map(attribute='attributes.brightness')
+             | reject('equalto', none)
+             | list %}
+          {% if foyer_brightness | count > 0 %}
+            {{ ((foyer_brightness | sum / (foyer_brightness | count)) / 255 * 100) | round(0) }}
+          {% else %}
+            30
+          {% endif %}
+    - action: scene.turn_on
+      target:
+        entity_id: scene.foyer_rest
+    - action: light.turn_on
+      target:
+        area_id: foyer
+      data:
+        brightness_pct: "{{ foyer_brightness_pct | int }}"
+    - action: scene.turn_on
+      target:
+        entity_id: scene.salon_detente
+    - action: light.turn_on
+      target:
+        area_id: salon
+      data:
+        brightness_pct: "{{ salon_brightness_pct | int }}"
+    - parallel:
+        - action: light.turn_off
+          target:
+            area_id: foyer
+          data:
+            transition: 20
+        - action: light.turn_off
+          target:
+            entity_id:
+              - light.salon_1
+              - light.salon_4
+          data:
+            transition: 20
+        - action: light.turn_on
+          target:
+            entity_id:
+              - light.salon_2
+              - light.salon_3
+          data:
+            brightness_pct: 30
+            transition: 20
   mode: restart
 # ============================================================
 # [SALLE A MANGER - ATTENUATION PROGRESSIVE 19H]
@@ -456,7 +568,7 @@
         target:
           entity_id: light.cote_luc
         data:
-          brightness_pct: 6
+          brightness_pct: 18
           color_temp_kelvin: 2000
           transition: 900
     - conditions:
