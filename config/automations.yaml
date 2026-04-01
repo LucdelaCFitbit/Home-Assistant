@@ -257,38 +257,24 @@
             entity_id: input_boolean.guest_mode
             state: 'off'
         sequence:
-          - action: script.apply_scene_with_current_area_brightness
+          - action: script.transition_lights_kelvin_then_dim_to_pct
             data:
-              area_id: foyer
-              scene_entity: scene.foyer_rest
-          - action: script.apply_scene_with_current_area_brightness
-            data:
-              area_id: salon
-              scene_entity: scene.salon_detente
-          - parallel:
-              - action: light.turn_off
-                target:
-                  area_id: foyer
-                data:
-                  transition: 20
-              - action: light.turn_off
-                target:
-                  entity_id:
-                    - light.salon_1
-                    - light.salon_4
-                data:
-                  transition: 20
-              - action: light.turn_on
-                target:
-                  entity_id:
-                    - light.salon_2
-                    - light.salon_3
-                data:
-                  brightness_pct: 30
-                  transition: 20
-          - action: scene.turn_on
-            target:
-              entity_id: scene.cuisine_rest
+              area_list:
+                - foyer
+                - salle_a_manger
+                - cuisine
+              light_list:
+                - light.salon_1
+                - light.salon_2
+                - light.salon_3
+                - light.salon_4
+              color_temp_kelvin: 2400
+              kelvin_transition_seconds: 10
+              end_brightness_pct: 0
+              per_light_end_brightness_pct:
+                light.salon_2: 30
+                light.salon_3: 30
+              dim_transition_seconds: 20
           - action: tts.speak
             target:
               entity_id: tts.google_translate_fr_ca
@@ -322,48 +308,6 @@
   mode: restart
 
 # ============================================================
-# [TEST LUMIERES MODE TV SALON]
-# ============================================================
-- id: 'living_room_google_tv_mode_test_lights_tv_on'
-  alias: AA TV | Salon | Test lumieres TV ON
-  description: Test des transitions lumieres salon et foyer au declenchement TV ON.
-  triggers: []
-  conditions: []
-  actions:
-    - action: script.transition_lights_kelvin_then_off_by_areas
-      data:
-        area_list:
-          - salon
-          - foyer
-          - salle_a_manger
-          - cuisine
-        color_temp_kelvin: 2400
-        kelvin_transition_seconds: 10
-        off_transition_seconds: 20
-  mode: restart
-
-- id: 'test_salon_detente_kelvin_then_dim_off'
-  alias: ZZ Test | Bureau Luc | Kelvin detente puis extinction progressive
-  description: Sans scene, applique une teinte chaude proche detente, puis eteint progressivement les lumieres de Bureau Luc.
-  triggers: []
-  conditions: []
-  actions:
-  - action: script.transition_lights_kelvin_then_dim_to_pct
-    data:
-      light_list:
-      - light.bureau_luc_1
-      - light.bureau_luc_2
-      - light.bureau_luc_3
-      - light.bureau_luc_4
-      color_temp_kelvin: 2400
-      kelvin_transition_seconds: 20
-      end_brightness_pct: 0
-      per_light_end_brightness_pct:
-        light.bureau_luc_3: 30
-        light.bureau_luc_4: 30
-      dim_transition_seconds: 25
-  mode: single
-# ============================================================
 # [REZ DE CHAUSSEE - ATTENUATION PROGRESSIVE 19H]
 # ============================================================
 # A 19:00, les lumieres du REZ DE CHAUSSEE passent progressivement
@@ -394,14 +338,12 @@
         id: may_oct_sunset_plus_1h
       - condition: template
         value_template: "{{ now().month in [5, 6, 7, 8, 9, 10] }}"
-  - condition: or
-    conditions:
-    - condition: state
-      entity_id: input_boolean.andre_mode
-      state: 'off'
-    - condition: state
-      entity_id: input_boolean.guest_mode
-      state: 'off'
+  - condition: state
+    entity_id: input_boolean.andre_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
   - condition: state
     entity_id: remote.tv
     state: 'off'
@@ -435,75 +377,38 @@
   mode: single
 
 - id: 'test_rezchausse_progressive_dim_if_mode_off'
-  alias: ZZ Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  alias: AA Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
   description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
   triggers: []
   conditions:
-  - condition: or
-    conditions:
-    - condition: state
-      entity_id: input_boolean.andre_mode
-      state: 'off'
-    - condition: state
-      entity_id: input_boolean.guest_mode
-      state: 'off'
+  - condition: state
+    entity_id: input_boolean.andre_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
   - condition: state
     entity_id: remote.tv
     state: 'off'
   actions:
-  - action: script.apply_scene_with_current_light_brightness
+  - action: script.transition_lights_kelvin_then_dim_to_pct
     data:
-      area_id: foyer
-      scene_entity: scene.foyer_rest
-  - action: script.apply_scene_with_current_light_brightness
-    data:
-      area_id: salon
-      scene_entity: scene.salon_detente
-  - action: script.apply_scene_with_current_light_brightness
-    data:
-      area_id: salle_a_manger
-      scene_entity: scene.salle_a_manger_rest
-  - action: script.apply_scene_with_current_light_brightness
-    data:
-      area_id: cuisine
-      scene_entity: scene.cuisine_detente
-  - action: light.turn_off
-    data:
-      transition: 20
-    target:
-      entity_id: >-
-        {{
-          expand(
-            area_entities('salon')
-            + area_entities('foyer')
-            + area_entities('salle_a_manger')
-            + area_entities('cuisine')
-          )
-          | selectattr('domain', 'eq', 'light')
-          | map(attribute='entity_id')
-          | unique
-          | list
-        }}
-  mode: single
-
-- id: 'test_dim_chambre_ami_100_to_10'
-  alias: ZZ Test | Lumiere | Chambre ami 100% vers 10%
-  description: Test manuel pour attenuer la lumiere de la chambre ami de 100% a 10% en paliers.
-  triggers: []
-  conditions: []
-  actions:
-  - action: script.dim_lights_from_to_duration
-    data:
-      light_target: >-
-        {{
-          expand(area_entities('chambre_amis'))
-          | selectattr('domain', 'eq', 'light')
-          | map(attribute='entity_id')
-          | list
-        }}
-      start_pct: 100
-      end_pct: 10
-      duration_seconds: 45
+      area_list:
+      - foyer
+      - salle_a_manger
+      - cuisine
+      light_list:
+      - light.salon_1
+      - light.salon_2
+      - light.salon_3
+      - light.salon_4
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 0
+      per_light_end_brightness_pct:
+        light.salon_2: 30
+        light.salon_3: 30
+      dim_transition_seconds: 20
   mode: single
 
 # ============================================================
@@ -675,34 +580,7 @@
         target:
           entity_id: light.armoire
   mode: single
-  
-  
-  
-# ============================================================
-# [TEST MANUEL - MOTION ENTREE]
-# ============================================================
-# Automatisation de test a lancer manuellement pour desactiver le motion d'entree.
-- id: 'test_manual_disable_entry_motion'
-  alias: ZZ Test Manuel | Desactiver motion entree
-  description: Desactive le capteur de mouvement d'entree (lancement manuel).
-  triggers: []
-  conditions: []
-  actions:
-  - action: switch.turn_off
-    target:
-      entity_id: switch.motion_entre_capteur_de_mouvement
-  mode: single
-# Automatisation de test a lancer manuellement pour activer le motion d'entree.
-- id: 'test_manual_enable_entry_motion'
-  alias: ZZ Test Manuel | Activer motion entree
-  description: Active le capteur de mouvement d'entree (lancement manuel).
-  triggers: []
-  conditions: []
-  actions:
-  - action: switch.turn_on
-    target:
-      entity_id: switch.motion_entre_capteur_de_mouvement
-  mode: single
+
 # ============================================================
 # [TEST BUREAU LUC - MESSAGE VOCAL 15H30]
 # ============================================================
