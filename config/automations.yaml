@@ -330,36 +330,39 @@
   triggers: []
   conditions: []
   actions:
-    - action: script.apply_scene_with_current_area_brightness
+    - action: script.transition_lights_kelvin_then_off_by_areas
       data:
-        area_id: foyer
-        scene_entity: scene.foyer_rest
-    - action: script.apply_scene_with_current_area_brightness
-      data:
-        area_id: salon
-        scene_entity: scene.salon_detente
-    - parallel:
-        - action: light.turn_off
-          target:
-            area_id: foyer
-          data:
-            transition: 20
-        - action: light.turn_off
-          target:
-            entity_id:
-              - light.salon_1
-              - light.salon_4
-          data:
-            transition: 20
-        - action: light.turn_on
-          target:
-            entity_id:
-              - light.salon_2
-              - light.salon_3
-          data:
-            brightness_pct: 30
-            transition: 20
+        area_list:
+          - salon
+          - foyer
+          - salle_a_manger
+          - cuisine
+        color_temp_kelvin: 2400
+        kelvin_transition_seconds: 10
+        off_transition_seconds: 20
   mode: restart
+
+- id: 'test_salon_detente_kelvin_then_dim_off'
+  alias: ZZ Test | Bureau Luc | Kelvin detente puis extinction progressive
+  description: Sans scene, applique une teinte chaude proche detente, puis eteint progressivement les lumieres de Bureau Luc.
+  triggers: []
+  conditions: []
+  actions:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      light_list:
+      - light.bureau_luc_1
+      - light.bureau_luc_2
+      - light.bureau_luc_3
+      - light.bureau_luc_4
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 20
+      end_brightness_pct: 0
+      per_light_end_brightness_pct:
+        light.bureau_luc_3: 30
+        light.bureau_luc_4: 30
+      dim_transition_seconds: 25
+  mode: single
 # ============================================================
 # [REZ DE CHAUSSEE - ATTENUATION PROGRESSIVE 19H]
 # ============================================================
@@ -428,7 +431,79 @@
       - cuisine
     data:
       brightness_pct: 30
-      transition: 7200
+      transition: 5400
+  mode: single
+
+- id: 'test_rezchausse_progressive_dim_if_mode_off'
+  alias: ZZ Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
+  triggers: []
+  conditions:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: input_boolean.andre_mode
+      state: 'off'
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: 'off'
+  - condition: state
+    entity_id: remote.tv
+    state: 'off'
+  actions:
+  - action: script.apply_scene_with_current_light_brightness
+    data:
+      area_id: foyer
+      scene_entity: scene.foyer_rest
+  - action: script.apply_scene_with_current_light_brightness
+    data:
+      area_id: salon
+      scene_entity: scene.salon_detente
+  - action: script.apply_scene_with_current_light_brightness
+    data:
+      area_id: salle_a_manger
+      scene_entity: scene.salle_a_manger_rest
+  - action: script.apply_scene_with_current_light_brightness
+    data:
+      area_id: cuisine
+      scene_entity: scene.cuisine_detente
+  - action: light.turn_off
+    data:
+      transition: 20
+    target:
+      entity_id: >-
+        {{
+          expand(
+            area_entities('salon')
+            + area_entities('foyer')
+            + area_entities('salle_a_manger')
+            + area_entities('cuisine')
+          )
+          | selectattr('domain', 'eq', 'light')
+          | map(attribute='entity_id')
+          | unique
+          | list
+        }}
+  mode: single
+
+- id: 'test_dim_chambre_ami_100_to_10'
+  alias: ZZ Test | Lumiere | Chambre ami 100% vers 10%
+  description: Test manuel pour attenuer la lumiere de la chambre ami de 100% a 10% en paliers.
+  triggers: []
+  conditions: []
+  actions:
+  - action: script.dim_lights_from_to_duration
+    data:
+      light_target: >-
+        {{
+          expand(area_entities('chambre_amis'))
+          | selectattr('domain', 'eq', 'light')
+          | map(attribute='entity_id')
+          | list
+        }}
+      start_pct: 100
+      end_pct: 10
+      duration_seconds: 45
   mode: single
 
 # ============================================================

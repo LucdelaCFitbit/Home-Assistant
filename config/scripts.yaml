@@ -42,6 +42,326 @@ apply_scene_with_current_area_brightness:
     data:
       brightness_pct: "{{ area_brightness_pct | int }}"
   mode: parallel
+apply_scene_with_current_light_brightness:
+  alias: Lumiere | Appliquer scene et conserver brightness par ampoule
+  description: Sauvegarde le brightness de chaque lumiere allumee de la zone, applique la scene puis restaure le brightness par ampoule.
+  fields:
+    area_id:
+      description: Identifiant de la zone Home Assistant (ex. salon, foyer).
+      example: salon
+      required: true
+    scene_entity:
+      description: Entite scene a appliquer.
+      example: scene.salon_detente
+      required: true
+  sequence:
+  - variables:
+      on_lights_with_brightness: >-
+        {% set ns = namespace(items=[]) %}
+        {% for l in expand(area_entities(area_id)) %}
+          {% if l.domain == 'light' and l.state == 'on' and l.attributes.brightness is not none %}
+            {% set ns.items = ns.items + [{'entity_id': l.entity_id, 'brightness': l.attributes.brightness}] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+      off_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% for l in expand(area_entities(area_id)) %}
+          {% if l.domain == 'light' and l.state == 'off' %}
+            {% set ns.items = ns.items + [l.entity_id] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+  - action: scene.turn_on
+    target:
+      entity_id: "{{ scene_entity }}"
+    data:
+      transition: 0
+  - repeat:
+      for_each: "{{ on_lights_with_brightness }}"
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ repeat.item.entity_id }}"
+        data:
+          brightness: "{{ repeat.item.brightness | int }}"
+          transition: 0
+  - condition: template
+    value_template: "{{ off_lights | count > 0 }}"
+  - action: light.turn_off
+    target:
+      entity_id: "{{ off_lights }}"
+    data:
+      transition: 0
+  mode: parallel
+transition_lights_kelvin_then_off_by_areas:
+  alias: Lumiere | Transition Kelvin puis extinction par zones ou lumieres
+  description: Applique une transition Kelvin aux lumieres compatibles des zones et/ou lumieres ciblees, puis eteint toutes les lumieres ciblees avec transition.
+  fields:
+    area_list:
+      description: Liste des zones ciblees (ex. salon, foyer).
+      example: "salon, foyer"
+    light_list:
+      description: Liste des lumieres ciblees (ex. light.bureau_luc_1, light.bureau_luc_2).
+      example: "light.bureau_luc_1, light.bureau_luc_2"
+    color_temp_kelvin:
+      description: Temperature Kelvin a atteindre pour les lumieres compatibles.
+      example: 2400
+      required: true
+    kelvin_transition_seconds:
+      description: Duree de transition vers la temperature Kelvin (secondes).
+      example: 20
+      required: true
+    off_transition_seconds:
+      description: Duree de transition vers l'extinction (secondes).
+      example: 25
+      required: true
+  sequence:
+  - variables:
+      all_target_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% if area_list is defined and area_list is not none %}
+          {% set areas = [area_list] if area_list is string else area_list %}
+          {% for a in areas %}
+            {% set ns.items = ns.items + (area_entities(a) | select('match', '^light\\.') | list) %}
+          {% endfor %}
+        {% endif %}
+        {% if light_list is defined and light_list is not none %}
+          {% set lights = [light_list] if light_list is string else light_list %}
+          {% for l in lights %}
+            {% if l is string and l.startswith('light.') %}
+              {% set ns.items = ns.items + [l] %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {{ ns.items | unique | list }}
+      color_temp_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% for e in all_target_lights %}
+          {% set modes = state_attr(e, 'supported_color_modes') | default([], true) %}
+          {% if 'color_temp' in modes %}
+            {% set ns.items = ns.items + [e] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+      kelvin_transition_safe: "{{ [0, kelvin_transition_seconds | int(0)] | max }}"
+      off_transition_safe: "{{ [0, off_transition_seconds | int(0)] | max }}"
+  - condition: template
+    value_template: "{{ all_target_lights | count > 0 }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ color_temp_lights | count > 0 }}"
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ color_temp_lights }}"
+        data:
+          color_temp_kelvin: "{{ color_temp_kelvin | int(2400) }}"
+          transition: "{{ kelvin_transition_safe | int }}"
+      - if: "{{ kelvin_transition_safe | int > 0 }}"
+        then:
+        - delay:
+            seconds: "{{ kelvin_transition_safe | int + 2 }}"
+  - action: light.turn_off
+    target:
+      entity_id: "{{ all_target_lights }}"
+    data:
+      transition: "{{ off_transition_safe | int }}"
+  mode: parallel
+transition_lights_kelvin_then_dim_to_pct:
+  alias: Lumiere | Transition Kelvin puis dim a pourcentage
+  description: Applique une transition Kelvin aux lumieres compatibles des zones et/ou lumieres ciblees, puis dimme jusqu'au pourcentage cible (global ou par lumiere).
+  fields:
+    area_list:
+      description: Liste des zones ciblees (ex. salon, foyer).
+      example: "salon, foyer"
+    light_list:
+      description: Liste des lumieres ciblees (ex. light.bureau_luc_1, light.bureau_luc_2).
+      example: "light.bureau_luc_1, light.bureau_luc_2"
+    color_temp_kelvin:
+      description: Temperature Kelvin a atteindre pour les lumieres compatibles.
+      example: 2400
+      required: true
+    kelvin_transition_seconds:
+      description: Duree de transition vers la temperature Kelvin (secondes).
+      example: 20
+      required: true
+    end_brightness_pct:
+      description: Pourcentage final de luminosite (0-100). 0 signifie extinction complete.
+      example: 30
+      required: true
+    per_light_end_brightness_pct:
+      description: Mapping optionnel par lumiere (entity_id -> pourcentage final 0-100), ex. light.bureau_luc_1=20, light.bureau_luc_2=60.
+      example: "light.bureau_luc_1: 20, light.bureau_luc_2: 60"
+    dim_transition_seconds:
+      description: Duree de transition vers le pourcentage final (secondes).
+      example: 25
+      required: true
+  sequence:
+  - variables:
+      all_target_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% if area_list is defined and area_list is not none %}
+          {% set areas = [area_list] if area_list is string else area_list %}
+          {% for a in areas %}
+            {% set ns.items = ns.items + (area_entities(a) | select('match', '^light\\.') | list) %}
+          {% endfor %}
+        {% endif %}
+        {% if light_list is defined and light_list is not none %}
+          {% set lights = [light_list] if light_list is string else light_list %}
+          {% for l in lights %}
+            {% if l is string and l.startswith('light.') %}
+              {% set ns.items = ns.items + [l] %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {{ ns.items | unique | list }}
+      color_temp_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% for e in all_target_lights %}
+          {% set modes = state_attr(e, 'supported_color_modes') | default([], true) %}
+          {% if 'color_temp' in modes %}
+            {% set ns.items = ns.items + [e] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+      kelvin_transition_safe: "{{ [0, kelvin_transition_seconds | int(0)] | max }}"
+      dim_transition_safe: "{{ [0, dim_transition_seconds | int(0)] | max }}"
+      end_pct_safe: >-
+        {% set p = end_brightness_pct | int(0) %}
+        {{ 0 if p < 0 else (100 if p > 100 else p) }}
+  - condition: template
+    value_template: "{{ all_target_lights | count > 0 }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ color_temp_lights | count > 0 }}"
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ color_temp_lights }}"
+        data:
+          color_temp_kelvin: "{{ color_temp_kelvin | int(2400) }}"
+          transition: "{{ kelvin_transition_safe | int }}"
+      - if: "{{ kelvin_transition_safe | int > 0 }}"
+        then:
+        - delay:
+            seconds: "{{ kelvin_transition_safe | int + 2 }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ all_target_lights | count > 0 }}"
+      sequence:
+      - repeat:
+          for_each: "{{ all_target_lights }}"
+          sequence:
+          - variables:
+              target_pct: >-
+                {% set fallback = end_pct_safe | int %}
+                {% if per_light_end_brightness_pct is defined
+                      and per_light_end_brightness_pct is mapping
+                      and repeat.item in per_light_end_brightness_pct %}
+                  {% set p = per_light_end_brightness_pct[repeat.item] | int(fallback) %}
+                {% else %}
+                  {% set p = fallback %}
+                {% endif %}
+                {{ 0 if p < 0 else (100 if p > 100 else p) }}
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: "{{ target_pct | int == 0 }}"
+              sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ repeat.item }}"
+                data:
+                  transition: "{{ dim_transition_safe | int }}"
+            default:
+            - action: light.turn_on
+              target:
+                entity_id: "{{ repeat.item }}"
+              data:
+                brightness_pct: "{{ target_pct | int }}"
+                transition: "{{ dim_transition_safe | int }}"
+  mode: parallel
+dim_lights_from_to_duration:
+  alias: Lumiere | Diminuer luminosite de X% a Y% sur duree
+  description: Dimming progressif d'une ou plusieurs lumieres. Si le pourcentage de fin est 0, eteint les lumieres a la fin.
+  fields:
+    light_target:
+      description: Entite(s) lumiere cible(s) (entity_id), ex. light.chambre_amis ou liste.
+      example: light.chambre_amis
+      required: true
+    start_pct:
+      description: Pourcentage de debut (0-100).
+      example: 100
+      required: true
+    end_pct:
+      description: Pourcentage de fin (0-100). 0 signifie extinction.
+      example: 10
+      required: true
+    duration_seconds:
+      description: Duree totale de la transition en secondes.
+      example: 180
+      required: true
+  sequence:
+  - variables:
+      from_pct: >-
+        {% set s = start_pct | int(100) %}
+        {% set e = end_pct | int(10) %}
+        {% set s_clamped = 0 if s < 0 else (100 if s > 100 else s) %}
+        {% set e_clamped = 0 if e < 0 else (100 if e > 100 else e) %}
+        {{ [s_clamped, e_clamped] | max }}
+      to_pct: >-
+        {% set s = start_pct | int(100) %}
+        {% set e = end_pct | int(10) %}
+        {% set s_clamped = 0 if s < 0 else (100 if s > 100 else s) %}
+        {% set e_clamped = 0 if e < 0 else (100 if e > 100 else e) %}
+        {{ [s_clamped, e_clamped] | min }}
+      duration_safe: >-
+        {% set d = duration_seconds | int(1) %}
+        {{ 1 if d < 1 else d }}
+      steps: "{{ [1, (from_pct | int - to_pct | int)] | max }}"
+      step_delay: "{{ [1, (duration_safe | int / steps | int)] | max }}"
+      current_pct: "{{ from_pct | int }}"
+  - action: light.turn_on
+    target:
+      entity_id: "{{ light_target }}"
+    data:
+      brightness_pct: "{{ from_pct | int }}"
+      transition: 1
+  - repeat:
+      while:
+      - condition: template
+        value_template: "{{ current_pct | int > to_pct | int }}"
+      sequence:
+      - variables:
+          next_pct: "{{ [to_pct | int, current_pct | int - 1] | max }}"
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: "{{ next_pct | int == 0 }}"
+          sequence:
+          - action: light.turn_off
+            target:
+              entity_id: "{{ light_target }}"
+            data:
+              transition: 1
+        default:
+        - action: light.turn_on
+          target:
+            entity_id: "{{ light_target }}"
+          data:
+            brightness_pct: "{{ next_pct | int }}"
+            transition: 1
+      - variables:
+          current_pct: "{{ next_pct | int }}"
+      - if: "{{ current_pct | int > to_pct | int }}"
+        then:
+        - delay:
+            seconds: "{{ step_delay | int }}"
+  mode: restart
 set_home_mode_off:
   alias: Set Home Mode Off
   description: Desactive le mode maison
