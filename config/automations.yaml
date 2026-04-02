@@ -20,25 +20,28 @@
   triggers:
   - trigger: sun
     event: sunset
-  conditions:
-  - condition: state
-    entity_id: input_boolean.andre_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.guest_mode
-    state: 'off'
+  conditions: []
   actions:
-  - repeat:
-      count: 3
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
       sequence:
-      - action: cover.close_cover
-        target:
-          entity_id:
-          - cover.salon
-          - cover.porte_patio
-      - if: "{{ not repeat.last }}"
-        then:
-        - delay: '00:01:00'
+      - repeat:
+          count: 3
+          sequence:
+          - action: cover.close_cover
+            target:
+              entity_id:
+              - cover.salon
+              - cover.porte_patio
+          - if: "{{ not repeat.last }}"
+            then:
+            - delay: '00:01:00'
   mode: single
 # ============================================================
 # [OUVERTURE SAISONNIERE DES STORES]
@@ -338,77 +341,45 @@
         id: may_oct_sunset_plus_1h
       - condition: template
         value_template: "{{ now().month in [5, 6, 7, 8, 9, 10] }}"
-  - condition: state
-    entity_id: input_boolean.andre_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.guest_mode
-    state: 'off'
-  - condition: state
-    entity_id: remote.tv
-    state: 'off'
   actions:
-  - action: script.apply_scene_with_current_area_brightness
-    data:
-      area_id: foyer
-      scene_entity: scene.foyer_rest
-  - action: script.apply_scene_with_current_area_brightness
-    data:
-      area_id: salon
-      scene_entity: scene.salon_detente
-  - action: script.apply_scene_with_current_area_brightness
-    data:
-      area_id: salle_a_manger
-      scene_entity: scene.salle_a_manger_rest
-  - action: script.apply_scene_with_current_area_brightness
-    data:
-      area_id: cuisine
-      scene_entity: scene.cuisine_detente
-  - action: light.turn_on
-    target:
-      area_id:
-      - salon
-      - foyer
-      - salle_a_manger
-      - cuisine
-    data:
-      brightness_pct: 30
-      transition: 5400
-  mode: single
-
-- id: 'test_rezchausse_progressive_dim_if_mode_off'
-  alias: AA Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
-  description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
-  triggers: []
-  conditions:
-  - condition: state
-    entity_id: input_boolean.andre_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.guest_mode
-    state: 'off'
-  - condition: state
-    entity_id: remote.tv
-    state: 'off'
-  actions:
-  - action: script.transition_lights_kelvin_then_dim_to_pct
-    data:
-      area_list:
-      - foyer
-      - salle_a_manger
-      - cuisine
-      light_list:
-      - light.salon_1
-      - light.salon_2
-      - light.salon_3
-      - light.salon_4
-      color_temp_kelvin: 2400
-      kelvin_transition_seconds: 10
-      end_brightness_pct: 0
-      per_light_end_brightness_pct:
-        light.salon_2: 30
-        light.salon_3: 30
-      dim_transition_seconds: 20
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      - condition: state
+        entity_id: remote.tv
+        state: 'off'
+      sequence:
+      - action: script.apply_scene_with_current_area_brightness
+        data:
+          area_id: foyer
+          scene_entity: scene.foyer_rest
+      - action: script.apply_scene_with_current_area_brightness
+        data:
+          area_id: salon
+          scene_entity: scene.salon_detente
+      - action: script.apply_scene_with_current_area_brightness
+        data:
+          area_id: salle_a_manger
+          scene_entity: scene.salle_a_manger_rest
+      - action: script.apply_scene_with_current_area_brightness
+        data:
+          area_id: cuisine
+          scene_entity: scene.cuisine_detente
+      - action: light.turn_on
+        target:
+          area_id:
+          - salon
+          - foyer
+          - salle_a_manger
+          - cuisine
+        data:
+          brightness_pct: 30
+          transition: 5400
   mode: single
 
 # ============================================================
@@ -669,5 +640,65 @@
 #           {{ 'TV ON' if trigger.id == 'tv_on' else 'TV OFF' }}
 #           | Activite: {{ state_attr('remote.tv', 'current_activity') | default('unknown', true) }}
 #   mode: single
+- id: 'test_lumiere_chambre_ami'
+  alias: AA Test | Lumiere | chambre ami
+  description: test chambre ami, execution manuelle.
+  triggers: []
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      sequence:
+      - action: script.transition_lights_kelvin_then_dim_to_pct
+        data:
+          area_list:
+          - chambre_amis
+          color_temp_kelvin: 4400
+          kelvin_transition_seconds: 10
+          end_brightness_pct: 0
+          dim_transition_seconds: 10
+  mode: single
 
-
+- id: 'test_rezchausse_progressive_dim_if_mode_off'
+  alias: AA Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
+  triggers: []
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      - condition: state
+        entity_id: remote.tv
+        state: 'off'
+      sequence:
+      - action: script.transition_lights_kelvin_then_dim_to_pct
+        data:
+          area_list:
+          - foyer
+          - salle_a_manger
+          - cuisine
+          light_list:
+          - light.salon_1
+          - light.salon_2
+          - light.salon_3
+          - light.salon_4
+          color_temp_kelvin: 2400
+          kelvin_transition_seconds: 10
+          end_brightness_pct: 0
+          per_light_end_brightness_pct:
+            light.salon_2: 30
+            light.salon_3: 30
+          dim_transition_seconds: 20
+  mode: single
