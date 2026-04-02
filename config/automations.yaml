@@ -354,32 +354,17 @@
         entity_id: remote.tv
         state: 'off'
       sequence:
-      - action: script.apply_scene_with_current_area_brightness
+      - action: script.transition_lights_kelvin_then_dim_to_pct
         data:
-          area_id: foyer
-          scene_entity: scene.foyer_rest
-      - action: script.apply_scene_with_current_area_brightness
-        data:
-          area_id: salon
-          scene_entity: scene.salon_detente
-      - action: script.apply_scene_with_current_area_brightness
-        data:
-          area_id: salle_a_manger
-          scene_entity: scene.salle_a_manger_rest
-      - action: script.apply_scene_with_current_area_brightness
-        data:
-          area_id: cuisine
-          scene_entity: scene.cuisine_detente
-      - action: light.turn_on
-        target:
-          area_id:
+          area_list:
           - salon
           - foyer
           - salle_a_manger
           - cuisine
-        data:
-          brightness_pct: 30
-          transition: 5400
+          color_temp_kelvin: 2400
+          kelvin_transition_seconds: 1800
+          end_brightness_pct: 30
+          dim_transition_seconds: 3600
   mode: single
 
 # ============================================================
@@ -641,7 +626,7 @@
 #           | Activite: {{ state_attr('remote.tv', 'current_activity') | default('unknown', true) }}
 #   mode: single
 - id: 'test_lumiere_chambre_ami'
-  alias: AA Test | Lumiere | chambre ami
+  alias: ZZ Test | Lumiere | chambre ami
   description: test chambre ami, execution manuelle.
   triggers: []
   conditions: []
@@ -666,7 +651,7 @@
   mode: single
 
 - id: 'test_rezchausse_progressive_dim_if_mode_off'
-  alias: AA Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  alias: ZZ Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
   description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
   triggers: []
   conditions: []
