@@ -224,26 +224,13 @@
 # NE PAS SUPPRIMER MEME SI L'INTEGRATION SAMSUNG TV A UN WAKE-ON-LAN IMPLICITE DEPRECIÉ, CAR CELUI-CI NE FONCTIONNE PAS FIABLEMENT.
 # ============================================================
 # Remplace le Wake-On-LAN implicite deprecie de l'integration Samsung TV.
-# Quand media_player.turn_on cible la TV, on envoie explicitement un magic packet.
+# Quand la TV est demandee en allumage, on envoie explicitement un magic packet.
 - id: 'samsung_tv_explicit_wol_turn_on'
   alias: TV | Samsung | Wake-on-LAN explicite
-  description: Envoie un magic packet WOL quand media_player.turn_on cible explicitement la TV Samsung du salon.
+  description: Envoie un magic packet WOL quand la TV Samsung du salon est demandee en allumage.
   triggers:
-    - trigger: event
-      event_type: call_service
-      event_data:
-        domain: media_player
-        service: turn_on
-        service_data:
-          entity_id: media_player.tele_qn50ls03aafxzc
-    - trigger: event
-      event_type: call_service
-      event_data:
-        domain: media_player
-        service: turn_on
-        service_data:
-          entity_id:
-            - media_player.tele_qn50ls03aafxzc
+    - trigger: samsungtv.turn_on
+      entity_id: media_player.tele_qn50ls03aafxzc
   conditions: []
   actions:
     - action: wake_on_lan.send_magic_packet
