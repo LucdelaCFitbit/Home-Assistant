@@ -220,6 +220,38 @@
   mode: single
 
 # ============================================================
+# [TV SAMSUNG - WAKE-ON-LAN EXPLICITE]
+# NE PAS SUPPRIMER MEME SI L'INTEGRATION SAMSUNG TV A UN WAKE-ON-LAN IMPLICITE DEPRECIÉ, CAR CELUI-CI NE FONCTIONNE PAS FIABLEMENT.
+# ============================================================
+# Remplace le Wake-On-LAN implicite deprecie de l'integration Samsung TV.
+# Quand media_player.turn_on cible la TV, on envoie explicitement un magic packet.
+- id: 'samsung_tv_explicit_wol_turn_on'
+  alias: TV | Samsung | Wake-on-LAN explicite
+  description: Envoie un magic packet WOL quand media_player.turn_on cible explicitement la TV Samsung du salon.
+  triggers:
+    - trigger: event
+      event_type: call_service
+      event_data:
+        domain: media_player
+        service: turn_on
+        service_data:
+          entity_id: media_player.tele_qn50ls03aafxzc
+    - trigger: event
+      event_type: call_service
+      event_data:
+        domain: media_player
+        service: turn_on
+        service_data:
+          entity_id:
+            - media_player.tele_qn50ls03aafxzc
+  conditions: []
+  actions:
+    - action: wake_on_lan.send_magic_packet
+      data:
+        mac: '64:07:f6:42:75:e4'
+  mode: single
+
+# ============================================================
 # [MODE TV SALON]
 # ============================================================
 # Quand Google TV (salon) s'allume apres 19:30, on desactive le capteur motion
@@ -278,6 +310,9 @@
                 light.salon_2: 30
                 light.salon_3: 30
               dim_transition_seconds: 20
+          - action: switch.turn_off
+            target:
+              entity_id: switch.motion_entre_capteur_de_mouvement
           - action: tts.speak
             target:
               entity_id: tts.google_translate_fr_ca
@@ -397,6 +432,42 @@
       - cuisine
     data:
       brightness_pct: 100
+  mode: single
+
+# ============================================================
+# [FIN DE SEMAINE - LUMIERES SI PLUIE] Progression vers scenario stimulation a 50%
+# ============================================================
+# En fin de semaine, si la meteo est pluvieuse, allume salon + foyer
+# a 50% avec la temperature de couleur Stimulation.
+- id: 'weekend_rainy_turn_on_salon_foyer_stimulation'
+  alias: Lumiere | Weekend pluie | ON salon et foyer stimulation 50%
+  description: En fin de semaine, allume salon et foyer si la meteo est rainy.
+  triggers:
+  - trigger: state
+    entity_id: weather.forecast_maison
+    to: rainy
+    id: rainy_state
+  - trigger: time
+    at: '08:30:00'
+    id: weekend_check
+  conditions:
+  - condition: time
+    weekday:
+    - sat
+    - sun
+  - condition: state
+    entity_id: weather.forecast_maison
+    state: rainy
+  actions:
+  - action: light.turn_on
+    target:
+      area_id:
+      - salon
+      - foyer
+    data:
+      color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') | int(6400) }}"
+      brightness_pct: 50
+      transition: 600
   mode: single
 
 # ============================================================
@@ -644,7 +715,7 @@
         data:
           area_list:
           - chambre_amis
-          color_temp_kelvin: 4400
+          color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
           kelvin_transition_seconds: 10
           end_brightness_pct: 0
           dim_transition_seconds: 10
@@ -679,7 +750,7 @@
           - light.salon_2
           - light.salon_3
           - light.salon_4
-          color_temp_kelvin: 2400
+          color_temp_kelvin: "{{ states('sensor.kelvin_detente') | int(2250) }}"
           kelvin_transition_seconds: 10
           end_brightness_pct: 0
           per_light_end_brightness_pct:

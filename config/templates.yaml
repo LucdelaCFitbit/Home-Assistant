@@ -1,0 +1,21 @@
+- sensor:
+    - name: Kelvin Lecture
+      unique_id: kelvin_lecture
+      unit_of_measurement: "K"
+      state: 2900
+    - name: Kelvin Concentration
+      unique_id: kelvin_concentration
+      unit_of_measurement: "K"
+      state: 4350
+    - name: Kelvin Stimulation
+      unique_id: kelvin_stimulation
+      unit_of_measurement: "K"
+      state: 6400
+    - name: Kelvin Detente
+      unique_id: kelvin_detente
+      unit_of_measurement: "K"
+      state: 2250
+    - name: Kelvin Repos
+      unique_id: kelvin_repos
+      unit_of_measurement: "K"
+      state: 2700
