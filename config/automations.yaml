@@ -689,12 +689,11 @@
   description: Diffuse le message de compte a rebours retraite sur le Google Nest Hub du bureau Luc.
   triggers:
   - trigger: time
-    at: '08:00:00'
-  - trigger: homeassistant
-    event: start
+    at: '08:30:00'
   conditions: []
   actions:
-  - action: notify.google_assistant_sdk
+  # - action: notify.google_assistant_sdk
+  - action: google_assistant_sdk.send_text_command
     data:
       message: "Il te reste {{ states('sensor.nbjours1mars2027') }} de jours avant la RETRAITE"
       target:
