@@ -41,3 +41,10 @@ lovelace:
       show_in_sidebar: true
       require_admin: true
       filename: dashboards/system.yaml
+    bureau-luc-nesthub:
+      mode: yaml
+      title: Bureau Luc Nest Hub
+      icon: mdi:monitor-dashboard
+      show_in_sidebar: false
+      require_admin: false
+      filename: dashboards/bureau_luc_nesthub.yaml

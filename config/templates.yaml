@@ -19,3 +19,21 @@
       unique_id: kelvin_repos
       unit_of_measurement: "K"
       state: 2700
+    - name: Porte Temps deverrouillee
+      unique_id: porte_temps_deverrouillee_minutes
+      unit_of_measurement: "min"
+      icon: mdi:timer-lock-open-outline
+      state: >-
+        {% set start_ts = as_timestamp(states('input_datetime.porte_compte_rebours_depart')) %}
+        {% if is_state('lock.porte', 'unlocked') %}
+          {{ ((as_timestamp(now()) - (start_ts if start_ts else as_timestamp(states.lock.porte.last_changed))) / 60) | int(0) }}
+        {% else %}
+          0
+        {% endif %}
+    - name: NbJours1Mars2027
+      unique_id: nb_jours_1_mars_2027
+      unit_of_measurement: "j"
+      icon: mdi:calendar-clock
+      state: >-
+        {% set diff = (strptime('2027-03-01', '%Y-%m-%d').date() - now().date()).days %}
+        {{ [diff, 0] | max }}

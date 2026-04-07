@@ -235,6 +235,8 @@ views:
         show_header_toggle: false
         entities:
           - entity: lock.porte
+          - entity: binary_sensor.porte_porte
+          - entity: sensor.porte_temps_deverrouillee
           - entity: weather.forecast_maison
           - entity: input_select.house_profile
 

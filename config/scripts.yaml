@@ -378,11 +378,14 @@ set_home_mode_off:
 #   - action: script.reload
 lock_porte_securise:
   alias: "Verrouillage Sécurisé Porte Entrée"
-  description: "Vérifie l'état de la porte avant de lancer le verrouillage"
+  description: "Verrouille seulement si la porte est fermee (DoorSense)"
   sequence:
     - condition: state
       entity_id: lock.porte
       state: "unlocked"
+    - condition: state
+      entity_id: binary_sensor.porte_porte
+      state: "off"
     - action: lock.lock
       target:
         entity_id: lock.porte

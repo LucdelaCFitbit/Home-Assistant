@@ -1,0 +1,11 @@
+title: Bureau Luc Nest Hub
+views:
+  - title: Retraite
+    path: retraite
+    badges: []
+    cards:
+      - type: markdown
+        content: >-
+          # RETRAITE
+
+          Il te reste **{{ states('sensor.nbjours1mars2027') }}** de jours avant la **RETRAITE**.

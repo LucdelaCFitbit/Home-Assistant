@@ -26,3 +26,9 @@ timer:
   focus_session:
     name: Focus Session
     duration: "00:25:00"
+
+input_datetime:
+  porte_compte_rebours_depart:
+    name: Porte | Depart compte rebours serrure
+    has_date: true
+    has_time: true

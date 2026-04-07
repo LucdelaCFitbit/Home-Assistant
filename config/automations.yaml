@@ -206,18 +206,30 @@
 # ============================================================
 # [SERRURE ENTREE - REBARRER AUTO]
 # ============================================================
-# Si la serrure d'entree reste debarree pendant 15 minutes,
-# elle est rebarree automatiquement.
+# Si la serrure d'entree est debarree, un delai de 15 minutes demarre.
+# Chaque ouverture de la porte reinitialise ce delai.
+# A la fin du delai, la serrure est rebarree si les conditions sont reunies.
 - id: 'entry_lock_auto_relock_after_15min'
   alias: "Serrure | Entree | Rebarre serrure apres 15 min debarree"
   trigger:
     - trigger: state
       entity_id: lock.porte
-      to: unlocked
-      for: '00:15:00'
+      to: 'unlocked'
+    - trigger: state
+      entity_id: binary_sensor.porte_porte
+      to: 'on'
   action:
+    - condition: state
+      entity_id: lock.porte
+      state: 'unlocked'
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.porte_compte_rebours_depart
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    - delay: '00:15:00'
     - action: script.lock_porte_securise
-  mode: single
+  mode: restart
 
 # ============================================================
 # [TV SAMSUNG - WAKE-ON-LAN EXPLICITE]
@@ -665,6 +677,28 @@
         {% set tmin = f.templow | round(0) %}
         {% set pluie = f.precipitation_probability | default(none) %}
         Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
+  mode: single
+
+# ============================================================
+# [BUREAU LUC - COMPTE A REBOURS RETRAITE]
+# ============================================================
+# Calcule le nombre de jours restants jusqu'au 1er mars 2027
+# et diffuse le message sur le Google Nest Hub du bureau Luc.
+- id: 'bureau_luc_compte_rebours_retraite_2027'
+  alias: Bureau Luc | Compte a rebours retraite (1 mars 2027)
+  description: Diffuse le message de compte a rebours retraite sur le Google Nest Hub du bureau Luc.
+  triggers:
+  - trigger: time
+    at: '08:00:00'
+  - trigger: homeassistant
+    event: start
+  conditions: []
+  actions:
+  - action: notify.google_assistant_sdk
+    data:
+      message: "Il te reste {{ states('sensor.nbjours1mars2027') }} de jours avant la RETRAITE"
+      target:
+      - bureau
   mode: single
 
 # - id: 'notification_remote_tv_pixel9a'
