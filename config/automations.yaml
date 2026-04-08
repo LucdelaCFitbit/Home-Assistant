@@ -228,7 +228,12 @@
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     - delay: '00:15:00'
-    - action: script.lock_porte_securise
+    - if:
+        - condition: state
+          entity_id: lock.porte
+          state: 'unlocked'
+      then:
+        - action: script.lock_porte_securise
   mode: restart
 
 # ============================================================
@@ -695,9 +700,7 @@
   # - action: notify.google_assistant_sdk
   - action: google_assistant_sdk.send_text_command
     data:
-      message: "Il te reste {{ states('sensor.nbjours1mars2027') }} de jours avant la RETRAITE"
-      target:
-      - bureau
+      command: "diffuse au bureau il te reste {{ states('sensor.nbjours1mars2027') }} de jours avant la RETRAITE"
   mode: single
 
 # - id: 'notification_remote_tv_pixel9a'
