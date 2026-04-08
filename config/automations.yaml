@@ -380,6 +380,9 @@
         id: may_oct_sunset_plus_1h
       - condition: template
         value_template: "{{ now().month in [5, 6, 7, 8, 9, 10] }}"
+  - condition: state
+    entity_id: remote.tv
+    state: 'off'
   actions:
   - choose:
     - conditions:
@@ -388,9 +391,6 @@
         state: 'off'
       - condition: state
         entity_id: input_boolean.guest_mode
-        state: 'off'
-      - condition: state
-        entity_id: remote.tv
         state: 'off'
       sequence:
       - action: script.transition_lights_kelvin_then_dim_to_pct
@@ -418,7 +418,10 @@
   - trigger: sun
     event: sunset
     offset: '-00:45:00'
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: remote.tv
+    state: 'off'
   actions:
   - action: scene.turn_on
     target:
