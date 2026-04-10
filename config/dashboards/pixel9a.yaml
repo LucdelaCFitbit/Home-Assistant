@@ -278,6 +278,14 @@ views:
             tap_action:
               action: toggle
           - type: custom:mushroom-template-card
+            primary: Vacances
+            secondary: "{{ 'Activé' if is_state('input_boolean.vacances', 'on') else 'Désactivé' }}"
+            icon: mdi:palm-tree
+            icon_color: "{{ 'yellow' if is_state('input_boolean.vacances', 'on') else 'disabled' }}"
+            entity: input_boolean.vacances
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
             primary: Focus
             secondary: "{{ 'Actif' if is_state('timer.focus_session', 'active') else 'Inactif' }}"
             icon: mdi:timer
@@ -285,6 +293,26 @@ views:
             entity: timer.focus_session
             tap_action:
               action: toggle
+          - type: custom:mushroom-template-card
+            primary: Prochain lever
+            secondary: >-
+              {{ as_local(state_attr('sun.sun', 'next_rising')).strftime('%H:%M')
+              if state_attr('sun.sun', 'next_rising') else 'Indisponible' }}
+            icon: mdi:weather-sunset-up
+            icon_color: amber
+            entity: sun.sun
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-template-card
+            primary: Prochain coucher
+            secondary: >-
+              {{ as_local(state_attr('sun.sun', 'next_setting')).strftime('%H:%M')
+              if state_attr('sun.sun', 'next_setting') else 'Indisponible' }}
+            icon: mdi:weather-sunset-down
+            icon_color: orange
+            entity: sun.sun
+            tap_action:
+              action: more-info
 
   - title: Actions rapides
     path: actions-rapides

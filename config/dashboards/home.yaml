@@ -23,6 +23,10 @@ views:
             name: Andre
             icon_color: blue
           - type: entity
+            entity: input_boolean.vacances
+            name: Vacances
+            icon_color: orange
+          - type: entity
             entity: timer.focus_session
             name: Focus
             icon_color: amber

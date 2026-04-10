@@ -442,6 +442,91 @@
   mode: single
 
 # ============================================================
+# [POULAILLER - ON/OFF AVANT SOLEIL ET EXTINCTION PROGRESSIVE AU COUCHER]
+# ============================================================
+# Allume la lumiere du poulailler 30 minutes avant le coucher du soleil
+# avec le scenario concentration, puis lance une extinction progressive
+# de 30 minutes au coucher du soleil.
+- id: 'poulailler_light_on_off_minus30_and_progressive_off_at_sunset'
+  alias: Lumiere | ON/OFF Poulailler
+  description: Allume la lumiere du poulailler a -30 min du coucher du soleil, puis extinction progressive de 30 min au coucher du soleil.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-00:30:00'
+    id: on_minus_30
+  - trigger: sun
+    event: sunset
+    id: off_at_sunset
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_minus_30
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.poulailler_lumineux
+    - conditions:
+      - condition: trigger
+        id: off_at_sunset
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.poulailler
+        data:
+          transition: 1800
+  mode: single
+
+# ============================================================
+# [BUREAU LUC - ON/OFF SEMAINE HORS VACANCES]
+# ============================================================
+# Du lundi au vendredi, hors vacances:
+# - 06:30: active le scenario concentration
+# - 17:00: eteint la lumiere progressivement sur 30 minutes
+- id: 'bureau_luc_weekday_on_off_hors_vacances'
+  alias: Lumiere | ON/OFF Bureau Luc
+  description: Du lundi au vendredi hors vacances, allume Bureau Luc a 06:30 (scenario concentration) puis extinction progressive a 17:00 sur 30 minutes.
+  triggers:
+  - trigger: time
+    at: '06:30:00'
+    id: on_0630
+  - trigger: time
+    at: '17:00:00'
+    id: off_1700
+  conditions:
+  - condition: state
+    entity_id: input_boolean.vacances
+    state: 'off'
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_0630
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.bureau_luc_concentration
+    - conditions:
+      - condition: trigger
+        id: off_1700
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.bureau_luc
+        data:
+          transition: 1800
+  mode: single
+
+# ============================================================
 # [FIN DE SEMAINE ET FERIES - LUMIERES SI PLUIE] Progression vers scenario stimulation a 50%
 # ============================================================
 # En fin de semaine ou jour ferie (via Workday), si la meteo est pluvieuse,
