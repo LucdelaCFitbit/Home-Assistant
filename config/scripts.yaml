@@ -171,7 +171,7 @@ apply_scene_with_current_area_brightness:
 #   mode: parallel
 transition_lights_kelvin_then_dim_to_pct:
   alias: Lumiere | Transition Kelvin puis dim a pourcentage
-  description: Applique une transition Kelvin aux lumieres compatibles des zones et/ou lumieres ciblees, puis dimme jusqu'au pourcentage cible (global ou par lumiere).
+  description: Applique une transition Kelvin aux lumieres compatibles des zones et/ou lumieres ciblees, puis dimme jusqu'au pourcentage cible (global ou par lumiere). Optionnellement, peut ignorer les lumieres deja eteintes.
   fields:
     area_list:
       description: Liste des zones ciblees (ex. salon, foyer).
@@ -198,6 +198,9 @@ transition_lights_kelvin_then_dim_to_pct:
       description: Duree de transition vers le pourcentage final (secondes).
       example: 25
       required: true
+    only_if_already_on:
+      description: Si true, applique les actions uniquement aux lumieres deja allumees (ne rallume pas les lumieres eteintes).
+      example: true
   sequence:
   - variables:
       all_target_lights: >-
@@ -217,9 +220,16 @@ transition_lights_kelvin_then_dim_to_pct:
           {% endfor %}
         {% endif %}
         {{ ns.items | unique | list }}
+      only_if_on_safe: "{{ only_if_already_on | default(false) | bool }}"
+      dim_target_lights: >-
+        {% if only_if_on_safe | bool %}
+          {{ all_target_lights | select('is_state', 'on') | list }}
+        {% else %}
+          {{ all_target_lights }}
+        {% endif %}
       color_temp_lights: >-
         {% set ns = namespace(items=[]) %}
-        {% for e in all_target_lights %}
+        {% for e in dim_target_lights %}
           {% set modes = state_attr(e, 'supported_color_modes') | default([], true) %}
           {% if 'color_temp' in modes %}
             {% set ns.items = ns.items + [e] %}
@@ -232,7 +242,7 @@ transition_lights_kelvin_then_dim_to_pct:
         {% set p = end_brightness_pct | int(0) %}
         {{ 0 if p < 0 else (100 if p > 100 else p) }}
   - condition: template
-    value_template: "{{ all_target_lights | count > 0 }}"
+    value_template: "{{ dim_target_lights | count > 0 }}"
   - choose:
     - conditions:
       - condition: template
@@ -251,10 +261,10 @@ transition_lights_kelvin_then_dim_to_pct:
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ all_target_lights | count > 0 }}"
+        value_template: "{{ dim_target_lights | count > 0 }}"
       sequence:
       - repeat:
-          for_each: "{{ all_target_lights }}"
+          for_each: "{{ dim_target_lights }}"
           sequence:
           - variables:
               target_pct: >-

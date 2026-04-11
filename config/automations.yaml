@@ -403,6 +403,7 @@
           color_temp_kelvin: 2400
           kelvin_transition_seconds: 1800
           end_brightness_pct: 30
+          only_if_already_on: true
           dim_transition_seconds: 3600
   mode: single
 
