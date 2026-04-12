@@ -382,3 +382,9 @@ views:
             entity: cover.chambre_amis
             name: Chambre amis
             show_position_control: true
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.third_reality_inc_3rds17bz
+            name: Capteur store chambre amie
+          - type: custom:mushroom-entity-card
+            entity: sensor.third_reality_inc_3rds17bz_batterie
+            name: Batterie capteur store chambre amie

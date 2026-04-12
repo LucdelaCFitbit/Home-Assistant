@@ -1,10 +1,12 @@
 # Home Assistant runtime and secrets
 config/.storage/
 config/.cloud/
+config/.cache/
 config/secrets.yaml
 
 # Home Assistant generated files
 config/home-assistant_v2.db*
+config/zigbee.db*
 config/home-assistant.log*
 config/OZW_Log.txt
 config/tts/
