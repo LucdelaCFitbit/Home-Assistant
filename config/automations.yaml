@@ -482,6 +482,43 @@
   mode: single
 
 # ============================================================
+# [VOLIERE - SCENE NATURELLE AU LEVER ET EXTINCTION PROGRESSIVE AVANT COUCHER]
+# ============================================================
+# Au lever du soleil, active la scene "Voliere Lumiere naturelle".
+# 60 minutes avant le coucher du soleil, eteint progressivement sur 20 minutes.
+- id: 'voliere_light_natural_on_sunrise_off_minus60_progressive'
+  alias: Lumiere | Soleil ON/OFF Voliere
+  description: Active la scene voliere lumiere naturelle au lever du soleil, puis eteint la lumiere 60 minutes avant le coucher du soleil avec transition de 20 minutes.
+  triggers:
+  - trigger: sun
+    event: sunrise
+    id: on_sunrise
+  - trigger: sun
+    event: sunset
+    offset: '-01:00:00'
+    id: off_minus_60
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_sunrise
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.voliere_lumiere_naturelle
+    - conditions:
+      - condition: trigger
+        id: off_minus_60
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.voliere
+        data:
+          transition: 1200
+  mode: single
+
+# ============================================================
 # [BUREAU LUC - ON/OFF SEMAINE HORS VACANCES]
 # ============================================================
 # Du lundi au vendredi, hors vacances:
