@@ -314,6 +314,7 @@
                 light.salon_2: 30
                 light.salon_3: 30
               dim_transition_seconds: 20
+              only_if_already_on: true
           - action: switch.turn_off
             target:
               entity_id: switch.motion_entre_capteur_de_mouvement

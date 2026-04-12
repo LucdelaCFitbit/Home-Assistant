@@ -8,6 +8,7 @@ config/home-assistant_v2.db*
 config/home-assistant.log*
 config/OZW_Log.txt
 config/tts/
+log/
 
 # Python cache
 __pycache__/
