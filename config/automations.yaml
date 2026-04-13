@@ -672,7 +672,7 @@
         target:
           entity_id: light.cote_luc
         data:
-          brightness_pct: 45
+          brightness_pct: 60
           color_temp_kelvin: 2700
           transition: 1800
     - conditions:
@@ -871,11 +871,38 @@
           area_list:
           - chambre_amis
           color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
-          kelvin_transition_seconds: 10
-          end_brightness_pct: 30
-          dim_transition_seconds: 10
-  mode: single
+          kelvin_transition_seconds: 30
+          end_brightness_pct: 0
+          only_if_already_on: true
+          dim_transition_seconds: 60
+  mode: restart
 
+- id: '2_test_lumiere_chambre_ami'
+  alias: ZZ 2 Test | Lumiere | chambre ami
+  description: test chambre ami, execution manuelle.
+  triggers: []
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      sequence:
+      - action: script.transition_lights_kelvin_then_dim_to_pct
+        data:
+          area_list:
+          - chambre_amis
+          color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
+          kelvin_transition_seconds: 60
+          end_brightness_pct: 30
+          only_if_already_on: true
+          dim_transition_seconds: 120
+  mode: single
+  
 - id: 'test_rezchausse_progressive_dim_if_mode_off'
   alias: ZZ Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
   description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
