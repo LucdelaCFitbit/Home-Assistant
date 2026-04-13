@@ -872,7 +872,7 @@
           - chambre_amis
           color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
           kelvin_transition_seconds: 10
-          end_brightness_pct: 0
+          end_brightness_pct: 30
           dim_transition_seconds: 10
   mode: single
 

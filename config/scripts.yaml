@@ -258,13 +258,20 @@ transition_lights_kelvin_then_dim_to_pct:
         then:
         - delay:
             seconds: "{{ kelvin_transition_safe | int + 2 }}"
+  - variables:
+      dim_target_lights_now: >-
+        {% if only_if_on_safe | bool %}
+          {{ all_target_lights | select('is_state', 'on') | list }}
+        {% else %}
+          {{ dim_target_lights }}
+        {% endif %}
   - choose:
     - conditions:
       - condition: template
-        value_template: "{{ dim_target_lights | count > 0 }}"
+        value_template: "{{ dim_target_lights_now | count > 0 }}"
       sequence:
       - repeat:
-          for_each: "{{ dim_target_lights }}"
+          for_each: "{{ dim_target_lights_now }}"
           sequence:
           - variables:
               target_pct: >-
