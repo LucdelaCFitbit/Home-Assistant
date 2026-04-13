@@ -687,6 +687,46 @@
   mode: restart
 
 # ============================================================
+# [CHAMBRE - ON/OFF SOLEIL ET 21H]
+# ============================================================
+# Allume 60 minutes avant le coucher du soleil avec la scene
+# Chambre Vent de montagne, puis eteint cote Luc et cote Vicki
+# a 21:00 avec une transition de 60 minutes.
+- id: 'bedroom_on_off_sunset_minus60_and_21h_transition'
+  alias: Lumiere | ON/OFF Chambre (cote Luc et cote Vicki)
+  description: Allume avec la scene Chambre Vent de montagne a -60 min du coucher du soleil, puis extinction progressive a 21:00 sur 60 minutes.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-01:00:00'
+    id: on_minus_60
+  - trigger: time
+    at: '21:00:00'
+    id: off_2100
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_minus_60
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.chambre_vent_de_montagne
+    - conditions:
+      - condition: trigger
+        id: off_2100
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.cote_luc
+          - light.cote_vicki
+        data:
+          transition: 3600
+  mode: restart
+  
+# ============================================================
 # [CUISINE - ARMOIRE MATIN SAISONNIER]
 # ============================================================
 # De novembre a avril, active la scene Cuisine Nouveau scenario
@@ -940,3 +980,4 @@
             light.salon_3: 30
           dim_transition_seconds: 20
   mode: single
+
