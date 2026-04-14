@@ -451,51 +451,51 @@ night_shutdown_except_adresse:
     target:
       entity_id: media_player.tele_qn50ls03aafxzc
   mode: single
-verifier_et_fermer_store:
-  alias: "Vérification intelligente store"
+verifier_et_actionner_store:
+  alias: "Vérification dynamique store avec répétition"
+  mode: parallel
   fields:
     store_entity:
-      description: "L'entité du store"
+      description: "L'entité du store (ex: cover.chambre_ami)"
     sensor_entity:
-      description: "L'entité du capteur (binary_sensor)"
+      description: "Le capteur (ex: binary_sensor.capteur_store_chambre_amie)"
     action_type:
       description: "close ou open"
     delay_seconds:
-      description: "Délai avant vérification"
+      description: "Délai entre chaque tentative"
+    nombre_essais:
+      description: "Nombre maximum de tentatives avant notification"
+      example: 3
 
   sequence:
-    # 1. Première tentative
-    - service: "cover.{{ action_type }}_cover"
-      target:
-        entity_id: "{{ store_entity }}"
-    
-    - delay: "{{ delay_seconds }}"
-    
-    # 2. Vérification après le premier délai
-    - if:
-        - condition: template
-          value_template: >
-            {{ (action_type == 'close' and states(sensor_entity) == 'on') or 
-               (action_type == 'open' and states(sensor_entity) == 'off') }}
-      then:
-        # 3. Deuxième tentative si ça a échoué
-        - service: "cover.{{ action_type }}_cover"
-          target:
-            entity_id: "{{ store_entity }}"
-        
-        - delay: "{{ delay_seconds }}"
-        
-        # 4. Vérification finale + Notification si toujours en échec
-        - if:
-            - condition: template
-              value_template: >
-                {{ (action_type == 'close' and states(sensor_entity) == 'on') or 
-                   (action_type == 'open' and states(sensor_entity) == 'off') }}
-          then:
-            - service: notify.mobile_app_lucdelac  # <--- Remplace par le nom exact de ton téléphone
-              data:
-                title: "⚠️ Alerte Store"
-                message: "Le store {{ state_attr(store_entity, 'friendly_name') }} est toujours {{ states(sensor_entity) }} après 2 tentatives."
-                data:
-                  priority: high
+    - repeat:
+        count: "{{ nombre_essais | int }}"
+        sequence:
+          # 1. Envoyer la commande
+          - service: "cover.{{ action_type }}_cover"
+            target:
+              entity_id: "{{ store_entity }}"
+          
+          # 2. Attendre le délai
+          - delay: "{{ delay_seconds | int }}"
+          
+          # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
+          - if:
+              - condition: template
+                value_template: >
+                  {% if action_type == 'close' %}
+                    {{ is_state(sensor_entity, 'off') }}
+                  {% else %}
+                    {{ is_state(sensor_entity, 'on') }}
+                  {% endif %}
+            then:
+              - stop: "Le store est dans la position désirée."
+
+    # 4. Si on arrive ici, c'est que la boucle est finie sans succès
+    - service: notify.mobile_app_lucdelac
+      data:
+        title: "⚠️ Échec critique Store"
+        message: "Le store {{ state_attr(store_entity, 'friendly_name') }} est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentatives."
+        data:
+          priority: high
 

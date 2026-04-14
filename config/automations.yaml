@@ -134,7 +134,7 @@
       event: sunrise
   condition: []
   action:
-    - service: script.verifier_et_fermer_store
+    - service: script.verifier_et_actionner_store
       data:
         store_entity: cover.chambre_amis
         sensor_entity: binary_sensor.third_reality_inc_3rds17bz
@@ -171,12 +171,13 @@
       - condition: template
         value_template: "{{ now().month not in [11, 12, 1, 2] }}"
   action:
-    - service: script.verifier_et_fermer_store
-        data:
-          store_entity: cover.chambre_amis
-          sensor_entity: binary_sensor.third_reality_inc_3rds17bz
-          action_type: "open"
-          delay_seconds: 30
+    - service: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.chambre_amis
+        sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+        action_type: "open"
+        delay_seconds: 30
+        nombre_essais: 3
   mode: single
 
 # ============================================================
