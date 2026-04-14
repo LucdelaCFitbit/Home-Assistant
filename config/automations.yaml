@@ -140,6 +140,7 @@
         sensor_entity: binary_sensor.third_reality_inc_3rds17bz
         action_type: "close"
         delay_seconds: 30
+        nombre_essais: 3
   mode: single
 
 # ============================================================

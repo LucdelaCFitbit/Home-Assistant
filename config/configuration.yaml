@@ -48,3 +48,20 @@ lovelace:
       show_in_sidebar: false
       require_admin: false
       filename: dashboards/bureau_luc_nesthub.yaml
+notify:
+  - name: gmail_alerte
+    platform: smtp
+    server: "smtp.gmail.com"
+    port: 587
+    timeout: 15
+    sender: "lucdelac@gmail.com"
+    encryption: starttls
+    username: "lucdelac@gmail.com"
+    password: !secret gmail_app_password
+    recipient: "lucdelac@gmail.com"
+  # Le GROUPE qui combine les deux
+  - name: toutes_les_alertes
+    platform: group
+    services:
+      - service: gmail_alerte
+      - service: mobile_app_lucdelac

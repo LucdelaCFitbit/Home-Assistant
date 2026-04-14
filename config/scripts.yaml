@@ -492,7 +492,7 @@ verifier_et_actionner_store:
               - stop: "Le store est dans la position désirée."
 
     # 4. Si on arrive ici, c'est que la boucle est finie sans succès
-    - service: notify.mobile_app_lucdelac
+    - service: notify.toutes_les_alertes
       data:
         title: "⚠️ Échec critique Store"
         message: "Le store {{ state_attr(store_entity, 'friendly_name') }} est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentatives."
