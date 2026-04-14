@@ -118,11 +118,67 @@
           target:
             entity_id:
             - cover.bureau
-            - cover.chambre_amis
+            #- cover.chambre_amis
         - if: "{{ not repeat.last }}"
           then:
           - delay: '00:00:30'
   mode: single
+# ============================================================
+# [FERMETURE CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
+# ============================================================
+- id: 'sunset_close_chambre_ami_with_repeats'
+  alias: "Store | Chambre Ami | Fermer au coucher du soleil"
+  description: "Ferme le store et vérifie via le script après 30s"
+  trigger:
+    - platform: sun
+      event: sunrise
+  condition: []
+  action:
+    - service: script.verifier_et_fermer_store
+      data:
+        store_entity: cover.chambre_amis
+        sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+        action_type: "close"
+        delay_seconds: 30
+  mode: single
+
+# ============================================================
+# [OUVERTURE CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
+# ============================================================
+- id: 'sunset_open_chambre_ami_with_repeats'
+  alias: "Store | Chambre Ami | Ouvrir au coucher du soleil"
+  description: "Ouvre le store et vérifie via le script après 30s"
+  triggers:
+    - trigger: sun
+      event: sunrise
+      id: sunrise
+    - trigger: time
+      at: '07:00:00'
+      id: time_0
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: sunrise
+      - condition: template
+        value_template: "{{ now().month in [11, 12, 1, 2] }}"
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: time_0
+      - condition: template
+        value_template: "{{ now().month not in [11, 12, 1, 2] }}"
+  action:
+    - service: script.verifier_et_fermer_store
+        data:
+          store_entity: cover.chambre_amis
+          sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+          action_type: "open"
+          delay_seconds: 30
+  mode: single
+
 # ============================================================
 # [FERMETURE CHAMBRE MAITRE AVANT SOLEIL]
 # ============================================================

@@ -451,3 +451,51 @@ night_shutdown_except_adresse:
     target:
       entity_id: media_player.tele_qn50ls03aafxzc
   mode: single
+verifier_et_fermer_store:
+  alias: "Vérification intelligente store"
+  fields:
+    store_entity:
+      description: "L'entité du store"
+    sensor_entity:
+      description: "L'entité du capteur (binary_sensor)"
+    action_type:
+      description: "close ou open"
+    delay_seconds:
+      description: "Délai avant vérification"
+
+  sequence:
+    # 1. Première tentative
+    - service: "cover.{{ action_type }}_cover"
+      target:
+        entity_id: "{{ store_entity }}"
+    
+    - delay: "{{ delay_seconds }}"
+    
+    # 2. Vérification après le premier délai
+    - if:
+        - condition: template
+          value_template: >
+            {{ (action_type == 'close' and states(sensor_entity) == 'on') or 
+               (action_type == 'open' and states(sensor_entity) == 'off') }}
+      then:
+        # 3. Deuxième tentative si ça a échoué
+        - service: "cover.{{ action_type }}_cover"
+          target:
+            entity_id: "{{ store_entity }}"
+        
+        - delay: "{{ delay_seconds }}"
+        
+        # 4. Vérification finale + Notification si toujours en échec
+        - if:
+            - condition: template
+              value_template: >
+                {{ (action_type == 'close' and states(sensor_entity) == 'on') or 
+                   (action_type == 'open' and states(sensor_entity) == 'off') }}
+          then:
+            - service: notify.mobile_app_lucdelac  # <--- Remplace par le nom exact de ton téléphone
+              data:
+                title: "⚠️ Alerte Store"
+                message: "Le store {{ state_attr(store_entity, 'friendly_name') }} est toujours {{ states(sensor_entity) }} après 2 tentatives."
+                data:
+                  priority: high
+
