@@ -489,6 +489,13 @@ verifier_et_actionner_store:
                     {{ is_state(sensor_entity, 'on') }}
                   {% endif %}
             then:
+              # --- ACTION SI RÉUSSITE ---
+              # On peut envoyer une notification de succès ici
+              - service: system_log.write
+                data:
+                  level: info
+                  message: "Succès pour {{ store_entity }} après {{ repeat.index }} essai(s)."
+              
               - stop: "Le store est dans la position désirée."
 
     # 4. Si on arrive ici, c'est que la boucle est finie sans succès
