@@ -143,10 +143,10 @@
   mode: single
 
 # ============================================================
-# [OUVERTURE CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
+# [OUVERTURE CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
-- id: 'sunset_open_chambre_ami_with_repeats'
-  alias: "Store | Chambre Ami | Ouvrir au coucher du soleil"
+- id: 'sunrise_open_chambre_ami_with_repeats'
+  alias: "Store | Chambre Ami | Ouvrir au lever du soleil"
   description: "Ouvre le store et vérifie via le script après 30s"
   triggers:
     - trigger: sun
