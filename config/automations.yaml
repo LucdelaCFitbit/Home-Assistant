@@ -131,7 +131,7 @@
   description: "Ferme le store et vérifie via le script après 30s"
   trigger:
     - platform: sun
-      event: sunrise
+      event: sunset
   condition: []
   action:
     - service: script.verifier_et_actionner_store
