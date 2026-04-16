@@ -27,6 +27,13 @@ lovelace:
       show_in_sidebar: true
       require_admin: false
       filename: dashboards/pixel9a.yaml
+    cell-mobile:
+      mode: yaml
+      title: Cellulaire
+      icon: mdi:cellphone
+      show_in_sidebar: false
+      require_admin: false
+      filename: dashboards/cellulaire.yaml
     home-lab:
       mode: yaml
       title: Home Lab
