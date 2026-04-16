@@ -15,11 +15,12 @@
 # Au coucher du soleil, ferme salon + salle a manger, puis répète après 1 et 2 minutes
 # uniquement si andre_mode ou guest_mode est OFF.
 - id: 'sunset_close_salon_dining_covers'
-  alias: Store | Soleil | Fermer stores salon et salle a manger
+  alias: Store | 🌅 | Fermer stores salon et salle a manger
   description: Ferme les stores au coucher du soleil. 3 essais espacés de 1 minute, sauf si andre_mode ou guest_mode est actif.
   triggers:
   - trigger: sun
     event: sunset
+    offset: '-00:45:00'
   conditions: []
   actions:
   - choose:
@@ -50,7 +51,7 @@
 # Hors hiver: ouverture à 07:00 avec répétitions après 1 et 2 minutes.
 # Cibles: bureau, chambre ami, salle a manger (porte_patio), salon.
 - id: 'open_covers_winter_sun_else_7am'
-  alias: Store | Ouverture saisonniere bureau Luc, chambre ami, salle a manger, salon
+  alias: Store | ☀️ | Ouverture saisonniere bureau Luc, chambre ami, salle a manger, salon
   description: En hiver ouvre au lever du soleil, sinon ouvre à 07:00. 4 essais espacés de 1 minute, y compris le salon a +15 min.
   triggers:
   - trigger: sun
@@ -104,7 +105,7 @@
 # ============================================================
 # Ferme les stores du bureau Luc et de la chambre ami au coucher du soleil, puis répète après 1 et 2 minutes.
 - id: 'sunset_close_bureau_luc_with_repeats'
-  alias: Store | Bureau Luc et Chambre Ami | Fermer stores au coucher du soleil avec répétitions
+  alias: Store | 🌅  | Bureau Luc et Chambre Ami | Fermer stores au coucher du soleil avec répétitions
   description: Ferme les stores du bureau Luc et de la chambre ami au coucher du soleil, puis répète après 1 et 2 minutes.
   triggers:
   - trigger: sun
@@ -127,7 +128,7 @@
 # [FERMETURE CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
 - id: 'sunset_close_chambre_ami_with_repeats'
-  alias: "Store | Chambre Ami | Fermer au coucher du soleil"
+  alias: "Store | 🌅 | Chambre Ami | Fermer au coucher du soleil"
   description: "Ferme le store et vérifie via le script après 30s"
   trigger:
     - platform: sun
@@ -147,7 +148,7 @@
 # [OUVERTURE CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
 - id: 'sunrise_open_chambre_ami_with_repeats'
-  alias: "Store | Chambre Ami | Ouvrir au lever du soleil"
+  alias: "Store | ☀️ | Chambre Ami | Ouvrir au lever du soleil"
   description: "Ouvre le store et vérifie via le script après 30s"
   triggers:
     - trigger: sun
@@ -187,7 +188,7 @@
 # Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil.
 # Cette automatisation est independante de andre_mode.
 - id: 'close_master_bedroom_cover_45min_before_sunset'
-  alias: Store | Soleil | Fermer store chambre maitre 45 min avant coucher (4 fois)
+  alias: Store | 🌅 | Fermer store chambre maitre 45 min avant coucher (4 fois)
   description: Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil et répète 4 fois.
   triggers:
     - trigger: sun
@@ -206,10 +207,10 @@
 # ============================================================
 # [OUVERTURE CHAMBRE MAITRE AVANT SOLEIL]
 # ============================================================
-# Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil.
+# Ouvre le store de la chambre maitre à 8h00 du matin.
 # Cette automatisation est independante de andre_mode.
 - id: 'open_master_bedroom_cover_0800'
-  alias: Store | Chambre Maître | Ouvrir store à 08h00 (4 fois)
+  alias: Store | ☀️ | Chambre Maître | Ouvrir store à 08h00 (4 fois)
   description: Ouvre le store de la chambre maître à 8h00 du matin et répète 4 fois.
   triggers:
     - trigger: time

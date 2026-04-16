@@ -490,11 +490,13 @@ verifier_et_actionner_store:
                   {% endif %}
             then:
               # --- ACTION SI RÉUSSITE ---
-              # On peut envoyer une notification de succès ici
-              - service: system_log.write
+              - service: notify.toutes_les_alertes
                 data:
-                  level: info
-                  message: "Succès pour {{ store_entity }} après {{ repeat.index }} essai(s)."
+                  title: "✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès"
+                  message: >-
+                    {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+                    {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès
+                    après {{ repeat.index }} tentative(s).
               
               - stop: "Le store est dans la position désirée."
 
@@ -502,7 +504,10 @@ verifier_et_actionner_store:
     - service: notify.toutes_les_alertes
       data:
         title: "⚠️ Échec critique Store"
-        message: "Le store {{ state_attr(store_entity, 'friendly_name') }} est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentatives."
+        message: >-
+          {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+          est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s).
+          Action demandée : {{ action_type }}.
         data:
           priority: high
 
