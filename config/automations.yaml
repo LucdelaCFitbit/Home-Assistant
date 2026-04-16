@@ -688,13 +688,13 @@
 # A 06:30, la simulation aube commence.  
 - id: 'matin_reveille_aube_cote_luc'
   alias: "Lumiere | Réveil : Aube Matinale - Chambre"
-  description: "Simulation aube douce Hue: 06:30 ambre faible, 07:00 plus clair, 07:30 extinction (semaine, hors vacances)."
+  description: "Simulation aube douce Hue: 06:30 ambre faible, 06:45 plus clair, 07:30 extinction (semaine, hors vacances)."
   triggers:
   - trigger: time
     at: '06:30:00'
     id: dawn_warm_low
   - trigger: time
-    at: '07:00:00'
+    at: '06:45:00'
     id: dawn_warm_mid
   - trigger: time
     at: '07:30:00'
@@ -722,7 +722,7 @@
         data:
           brightness_pct: 18
           color_temp_kelvin: 2000
-          transition: 900
+          transition: 900           # 15 minutes pour le lever progressif
     - conditions:
       - condition: trigger
         id: dawn_warm_mid
@@ -733,7 +733,7 @@
         data:
           brightness_pct: 60
           color_temp_kelvin: 2700
-          transition: 1800
+          transition: 1800           # 30 minutes pour le lever progressif
     - conditions:
       - condition: trigger
         id: off_730
