@@ -112,20 +112,35 @@
   condition: []
   action:
     - parallel:
-      - service: script.verifier_et_actionner_store
+      - action: script.verifier_et_actionner_store
         data:
           store_entity: cover.chambre_amis
-          sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+          sensor_entity: binary_sensor.capteur_store_chambre_amie
           action_type: "close"
           delay_seconds: 30
           nombre_essais: 3
-      - service: script.verifier_et_actionner_store
+        response_variable: retour_chambre
+      - action: script.verifier_et_actionner_store
         data:
           store_entity: cover.bureau
-          sensor_entity: binary_sensor.third_reality_inc_3rds17bz_2
+          sensor_entity: binary_sensor.capteur_store_bureau_luc
           action_type: "close"
           delay_seconds: 30
           nombre_essais: 3
+        response_variable: retour_bureau
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' and retour_bureau.status == 'succes' %}
+            ✅ Les 2 stores fermés avec succès
+          {% elif retour_chambre.status == 'succes' or retour_bureau.status == 'succes' %}
+            ⚠️ Fermeture partielle des stores
+          {% else %}
+            ❌ Échec fermeture des 2 stores
+          {% endif %}
+        message: >-
+          Chambre ami : {{ retour_chambre.message }}
+          Bureau : {{ retour_bureau.message }}
   mode: single
 
 # ============================================================
@@ -158,20 +173,35 @@
         value_template: "{{ now().month not in [11, 12, 1, 2] }}"
   action:
     - parallel:
-      - service: script.verifier_et_actionner_store
+      - action: script.verifier_et_actionner_store
         data:
           store_entity: cover.chambre_amis
-          sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+          sensor_entity: binary_sensor.capteur_store_chambre_amie
           action_type: "open"
           delay_seconds: 30
           nombre_essais: 3
-      - service: script.verifier_et_actionner_store
+        response_variable: retour_chambre
+      - action: script.verifier_et_actionner_store
         data:
           store_entity: cover.bureau
-          sensor_entity: binary_sensor.third_reality_inc_3rds17bz_2
+          sensor_entity: binary_sensor.capteur_store_bureau_luc
           action_type: "open"
           delay_seconds: 30
           nombre_essais: 3
+        response_variable: retour_bureau
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' and retour_bureau.status == 'succes' %}
+            ✅ Les 2 stores ouverts avec succès
+          {% elif retour_chambre.status == 'succes' or retour_bureau.status == 'succes' %}
+            ⚠️ Ouverture partielle des stores
+          {% else %}
+            ❌ Échec ouverture des 2 stores
+          {% endif %}
+        message: >-
+          Chambre ami : {{ retour_chambre.message }}
+          Bureau : {{ retour_bureau.message }}
   mode: single
 
 # ============================================================
@@ -180,21 +210,27 @@
 # Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil.
 # Cette automatisation est independante de andre_mode.
 - id: 'close_master_bedroom_cover_45min_before_sunset'
-  alias: Store | 🌅 | Fermer store chambre maitre 45 min avant coucher (4 fois)
-  description: Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil et répète 4 fois.
+  alias: Store | 🌅 | Fermer store chambre maitre 45 min avant coucher
+  description: Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil via le script de vérification.
   triggers:
     - trigger: sun
       event: sunset
       offset: '-00:45:00'
   conditions: []
   actions:
-    - repeat:
-        count: 4
-        sequence:
-          - action: cover.close_cover
-            target:
-              entity_id: cover.chambre_maitre
-          - delay: '00:01:00' # Attend 1 minute entre chaque répétition
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.chambre_maitre
+        sensor_entity: binary_sensor.capteur_store_chambre_maitre
+        action_type: "close"
+        delay_seconds: 60
+        nombre_essais: 3
+      response_variable: retour_chambre
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' %}✅ Chambre maître fermée avec succès{% else %}⚠️ Échec fermeture chambre maître{% endif %}
+        message: "{{ retour_chambre.message }}"
   mode: single
 # ============================================================
 # [OUVERTURE CHAMBRE MAITRE AVANT SOLEIL]
@@ -202,20 +238,26 @@
 # Ouvre le store de la chambre maitre à 8h00 du matin.
 # Cette automatisation est independante de andre_mode.
 - id: 'open_master_bedroom_cover_0800'
-  alias: Store | ☀️ | Chambre Maître | Ouvrir store à 08h00 (4 fois)
-  description: Ouvre le store de la chambre maître à 8h00 du matin et répète 4 fois.
+  alias: Store | ☀️ | Chambre Maître | Ouvrir store à 08h00
+  description: Ouvre le store de la chambre maître à 8h00 du matin via le script de vérification.
   triggers:
     - trigger: time
       at: '08:00:00'
   conditions: []
   actions:
-    - repeat:
-        count: 4
-        sequence:
-          - action: cover.open_cover
-            target:
-              entity_id: cover.chambre_maitre
-          - delay: '00:01:00' # Attend 1 minute entre chaque répétition
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.chambre_maitre
+        sensor_entity: binary_sensor.capteur_store_chambre_maitre
+        action_type: "open"
+        delay_seconds: 10
+        nombre_essais: 3
+      response_variable: retour_chambre
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' %}✅ Chambre maître ouverte avec succès{% else %}⚠️ Échec ouverture chambre maître{% endif %}
+        message: "{{ retour_chambre.message }}"
   mode: single
 
 # ============================================================
@@ -1031,4 +1073,3 @@
             light.salon_3: 30
           dim_transition_seconds: 20
   mode: single
-

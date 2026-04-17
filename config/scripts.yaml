@@ -452,7 +452,7 @@ night_shutdown_except_adresse:
       entity_id: media_player.tele_qn50ls03aafxzc
   mode: single
 verifier_et_actionner_store:
-  alias: "Vérification dynamique store avec répétition"
+  alias: "Test | Vérification dynamique store avec répétition"
   mode: parallel
   fields:
     store_entity:
@@ -472,13 +472,14 @@ verifier_et_actionner_store:
         count: "{{ nombre_essais | int }}"
         sequence:
           # 1. Envoyer la commande
-          - service: "cover.{{ action_type }}_cover"
+          - action: "cover.{{ action_type }}_cover"
             target:
               entity_id: "{{ store_entity }}"
-          
+
           # 2. Attendre le délai
-          - delay: "{{ delay_seconds | int }}"
-          
+          - delay:
+              seconds: "{{ delay_seconds | int }}"
+
           # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
           - if:
               - condition: template
@@ -489,25 +490,25 @@ verifier_et_actionner_store:
                     {{ is_state(sensor_entity, 'on') }}
                   {% endif %}
             then:
-              # --- ACTION SI RÉUSSITE ---
-              - service: notify.toutes_les_alertes
-                data:
-                  title: "✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès"
-                  message: >-
-                    {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
-                    {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès
-                    après {{ repeat.index }} tentative(s).
-              
-              - stop: "Le store est dans la position désirée."
+              - variables:
+                  script_response:
+                    message: >-
+                      ✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès —
+                      {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+                      après {{ repeat.index }} tentative(s).
+                    status: "succes"
+              - stop: "Succès"
+                response_variable: script_response
 
     # 4. Si on arrive ici, c'est que la boucle est finie sans succès
-    - service: notify.toutes_les_alertes
-      data:
-        title: "⚠️ Échec critique Store"
-        message: >-
-          {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
-          est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s).
-          Action demandée : {{ action_type }}.
-        data:
-          priority: high
+    - variables:
+        script_response:
+          message: >-
+            ⚠️ Échec critique Store —
+            {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+            est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s).
+            Action demandée : {{ action_type }}.
+          status: "echec"
+    - stop: "Échec"
+      response_variable: script_response
 
