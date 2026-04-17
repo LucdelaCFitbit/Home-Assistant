@@ -82,8 +82,8 @@
       - action: cover.open_cover
         target:
           entity_id:
-          - cover.bureau
-          - cover.chambre_amis
+          #- cover.bureau
+          #- cover.chambre_amis
           - cover.porte_patio
       - if: "{{ not repeat.last }}"
         then:
@@ -103,52 +103,36 @@
 # ============================================================
 # [FERMETURE BUREAU LUC ET CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
-# Ferme les stores du bureau Luc et de la chambre ami au coucher du soleil, puis répète après 1 et 2 minutes.
-- id: 'sunset_close_bureau_luc_with_repeats'
-  alias: Store | 🌅  | Bureau Luc et Chambre Ami | Fermer stores au coucher du soleil avec répétitions
-  description: Ferme les stores du bureau Luc et de la chambre ami au coucher du soleil, puis répète après 1 et 2 minutes.
-  triggers:
-  - trigger: sun
-    event: sunset
-  conditions: []
-  actions:
-    - repeat:
-        count: 4
-        sequence:
-        - action: cover.close_cover
-          target:
-            entity_id:
-            - cover.bureau
-            #- cover.chambre_amis
-        - if: "{{ not repeat.last }}"
-          then:
-          - delay: '00:00:30'
-  mode: single
-# ============================================================
-# [FERMETURE CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
-# ============================================================
-- id: 'sunset_close_chambre_ami_with_repeats'
-  alias: "Store | 🌅 | Chambre Ami | Fermer au coucher du soleil"
+- id: 'sunset_close_bureau_luc_chambre_ami_with_repeats'
+  alias: "Store | 🌅 | Bureau Luc et Chambre Ami | Fermer au coucher du soleil"
   description: "Ferme le store et vérifie via le script après 30s"
   trigger:
     - platform: sun
       event: sunset
   condition: []
   action:
-    - service: script.verifier_et_actionner_store
-      data:
-        store_entity: cover.chambre_amis
-        sensor_entity: binary_sensor.third_reality_inc_3rds17bz
-        action_type: "close"
-        delay_seconds: 30
-        nombre_essais: 3
+    - parallel:
+      - service: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.chambre_amis
+          sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+          action_type: "close"
+          delay_seconds: 30
+          nombre_essais: 3
+      - service: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.bureau
+          sensor_entity: binary_sensor.third_reality_inc_3rds17bz_2
+          action_type: "close"
+          delay_seconds: 30
+          nombre_essais: 3
   mode: single
 
 # ============================================================
-# [OUVERTURE CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
+# [OUVERTURE BUREAU LUC ET CHAMBRE AMI AU LEVER DU SOLEIL AVEC REPETITIONS]
 # ============================================================
-- id: 'sunrise_open_chambre_ami_with_repeats'
-  alias: "Store | ☀️ | Chambre Ami | Ouvrir au lever du soleil"
+- id: 'sunrise_open_bureau_luc_chambre_ami_with_repeats'
+  alias: "Store | ☀️ | Bureau Luc et Chambre Ami | Ouvrir au lever du soleil"
   description: "Ouvre le store et vérifie via le script après 30s"
   triggers:
     - trigger: sun
@@ -173,13 +157,21 @@
       - condition: template
         value_template: "{{ now().month not in [11, 12, 1, 2] }}"
   action:
-    - service: script.verifier_et_actionner_store
-      data:
-        store_entity: cover.chambre_amis
-        sensor_entity: binary_sensor.third_reality_inc_3rds17bz
-        action_type: "open"
-        delay_seconds: 30
-        nombre_essais: 3
+    - parallel:
+      - service: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.chambre_amis
+          sensor_entity: binary_sensor.third_reality_inc_3rds17bz
+          action_type: "open"
+          delay_seconds: 30
+          nombre_essais: 3
+      - service: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.bureau
+          sensor_entity: binary_sensor.third_reality_inc_3rds17bz_2
+          action_type: "open"
+          delay_seconds: 30
+          nombre_essais: 3
   mode: single
 
 # ============================================================
