@@ -357,10 +357,7 @@ views:
         title: Stores
         subtitle: Tous les stores de la maison
 
-      - type: grid
-        title: Tous les stores
-        columns: 2
-        square: false
+      - type: vertical-stack
         cards:
           - type: custom:mushroom-cover-card
             entity: cover.salon
@@ -370,21 +367,45 @@ views:
             entity: cover.porte_patio
             name: Porte patio
             show_position_control: true
-          - type: custom:mushroom-cover-card
-            entity: cover.bureau
-            name: Bureau
-            show_position_control: true
-          - type: custom:mushroom-cover-card
-            entity: cover.chambre_maitre
-            name: Chambre maitre
-            show_position_control: true
-          - type: custom:mushroom-cover-card
-            entity: cover.chambre_amis
-            name: Chambre amis
-            show_position_control: true
-          - type: custom:mushroom-entity-card
-            entity: binary_sensor.third_reality_inc_3rds17bz
-            name: Capteur store chambre amie
-          - type: custom:mushroom-entity-card
-            entity: sensor.third_reality_inc_3rds17bz_batterie
-            name: Batterie capteur store chambre amie
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-cover-card
+                entity: cover.bureau
+                name: Bureau
+                show_position_control: true
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: binary_sensor.capteur_store_bureau_luc
+                    name: Capteur store bureau
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.capteur_store_bureau_luc_batterie
+                    name: Batterie capteur store bureau
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-cover-card
+                entity: cover.chambre_maitre
+                name: Chambre maitre
+                show_position_control: true
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: binary_sensor.capteur_store_chambre_maitre
+                    name: Capteur store chambre maitre
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.capteur_store_chambre_maitre_batterie
+                    name: Batterie capteur store chambre maitre
+          - type: horizontal-stack
+            cards:
+              - type: custom:mushroom-cover-card
+                entity: cover.chambre_amis
+                name: Chambre amis
+                show_position_control: true
+              - type: vertical-stack
+                cards:
+                  - type: custom:mushroom-entity-card
+                    entity: binary_sensor.capteur_store_chambre_amie
+                    name: Capteur store chambre amis
+                  - type: custom:mushroom-entity-card
+                    entity: sensor.capteur_store_chambre_amie_batterie
+                    name: Batterie capteur store chambre amie
