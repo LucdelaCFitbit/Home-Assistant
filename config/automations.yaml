@@ -389,25 +389,10 @@
             entity_id: input_boolean.guest_mode
             state: 'off'
         sequence:
-          - action: script.transition_lights_kelvin_then_dim_to_pct
-            data:
-              area_list:
-                - foyer
-                - salle_a_manger
-                - cuisine
-              light_list:
-                - light.salon_1
-                - light.salon_2
-                - light.salon_3
-                - light.salon_4
-              color_temp_kelvin: 2400
-              kelvin_transition_seconds: 10
-              end_brightness_pct: 0
-              per_light_end_brightness_pct:
-                light.salon_2: 30
-                light.salon_3: 30
-              dim_transition_seconds: 20
-              only_if_already_on: true
+          - action: script.turn_off
+            target:
+              entity_id: script.dim_progressif_rezchausse_soir
+          - action: script.dim_rezchausse_mode_tv
           - action: switch.turn_off
             target:
               entity_id: switch.motion_entre_capteur_de_mouvement
@@ -487,18 +472,7 @@
         entity_id: input_boolean.guest_mode
         state: 'off'
       sequence:
-      - action: script.transition_lights_kelvin_then_dim_to_pct
-        data:
-          area_list:
-          - salon
-          - foyer
-          - salle_a_manger
-          - cuisine
-          color_temp_kelvin: 2400
-          kelvin_transition_seconds: 1800
-          end_brightness_pct: 30
-          only_if_already_on: true
-          dim_transition_seconds: 3600
+      - action: script.dim_progressif_rezchausse_soir
   mode: single
 
 # ============================================================
@@ -999,15 +973,7 @@
         entity_id: input_boolean.guest_mode
         state: 'off'
       sequence:
-      - action: script.transition_lights_kelvin_then_dim_to_pct
-        data:
-          area_list:
-          - chambre_amis
-          color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
-          kelvin_transition_seconds: 30
-          end_brightness_pct: 0
-          only_if_already_on: true
-          dim_transition_seconds: 60
+      - action: script.dim_chambre_ami_stimulation_test_1
   mode: restart
 
 - id: '2_test_lumiere_chambre_ami'
@@ -1025,15 +991,7 @@
         entity_id: input_boolean.guest_mode
         state: 'off'
       sequence:
-      - action: script.transition_lights_kelvin_then_dim_to_pct
-        data:
-          area_list:
-          - chambre_amis
-          color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
-          kelvin_transition_seconds: 60
-          end_brightness_pct: 30
-          only_if_already_on: true
-          dim_transition_seconds: 120
+      - action: script.dim_chambre_ami_stimulation_test_2
   mode: single
   
 - id: 'test_rezchausse_progressive_dim_if_mode_off'
@@ -1054,22 +1012,5 @@
         entity_id: remote.tv
         state: 'off'
       sequence:
-      - action: script.transition_lights_kelvin_then_dim_to_pct
-        data:
-          area_list:
-          - foyer
-          - salle_a_manger
-          - cuisine
-          light_list:
-          - light.salon_1
-          - light.salon_2
-          - light.salon_3
-          - light.salon_4
-          color_temp_kelvin: "{{ states('sensor.kelvin_detente') | int(2250) }}"
-          kelvin_transition_seconds: 10
-          end_brightness_pct: 0
-          per_light_end_brightness_pct:
-            light.salon_2: 30
-            light.salon_3: 30
-          dim_transition_seconds: 20
+      - action: script.dim_rezchausse_soir_test
   mode: single

@@ -512,3 +512,103 @@ verifier_et_actionner_store:
     - stop: "Échec"
       response_variable: script_response
 
+# ============================================================
+# [ENVELOPPES - TRANSITION KELVIN PUIS DIM]
+# ============================================================
+dim_rezchausse_mode_tv:
+  alias: Lumiere | Rez-de-chaussee | Dim pour mode TV salon
+  description: Enveloppe de transition_lights_kelvin_then_dim_to_pct pour le mode TV salon (foyer, salle a manger, cuisine + salon 1-4, 2400K, dim salon 2/3 a 30%).
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - foyer
+        - salle_a_manger
+        - cuisine
+      light_list:
+        - light.salon_1
+        - light.salon_2
+        - light.salon_3
+        - light.salon_4
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 0
+      per_light_end_brightness_pct:
+        light.salon_2: 30
+        light.salon_3: 30
+      dim_transition_seconds: 20
+      only_if_already_on: true
+  mode: restart
+
+dim_progressif_rezchausse_soir:
+  alias: Lumiere | Rez-de-chaussee | Dim progressif soir
+  description: Enveloppe de transition_lights_kelvin_then_dim_to_pct pour le passage progressif soir (salon, foyer, salle a manger, cuisine, 2400K, 30%, 30 min kelvin + 60 min dim).
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - salon
+        - foyer
+        - salle_a_manger
+        - cuisine
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 1800
+      end_brightness_pct: 30
+      only_if_already_on: true
+      dim_transition_seconds: 3600
+  mode: restart
+
+dim_chambre_ami_stimulation_test_1:
+  alias: ZZ Test | Lumiere | Chambre ami | Dim stimulation extinction
+  description: Enveloppe de test - transition_lights_kelvin_then_dim_to_pct pour chambre_amis avec kelvin_stimulation, extinction complete.
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - chambre_amis
+      color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
+      kelvin_transition_seconds: 30
+      end_brightness_pct: 0
+      only_if_already_on: true
+      dim_transition_seconds: 60
+  mode: restart
+
+dim_chambre_ami_stimulation_test_2:
+  alias: ZZ Test | Lumiere | Chambre ami | Dim stimulation 30%
+  description: Enveloppe de test - transition_lights_kelvin_then_dim_to_pct pour chambre_amis avec kelvin_stimulation, dim a 30%.
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - chambre_amis
+      color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
+      kelvin_transition_seconds: 60
+      end_brightness_pct: 30
+      only_if_already_on: true
+      dim_transition_seconds: 120
+  mode: restart
+
+dim_rezchausse_soir_test:
+  alias: ZZ Test | Lumiere | Rez-de-chaussee | Dim soir (mode TV)
+  description: Enveloppe de test - transition_lights_kelvin_then_dim_to_pct pour foyer, salle a manger, cuisine + salon 1-4 avec kelvin_detente, salon 2/3 a 30%.
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - foyer
+        - salle_a_manger
+        - cuisine
+      light_list:
+        - light.salon_1
+        - light.salon_2
+        - light.salon_3
+        - light.salon_4
+      color_temp_kelvin: "{{ states('sensor.kelvin_detente') | int(2250) }}"
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 0
+      per_light_end_brightness_pct:
+        light.salon_2: 30
+        light.salon_3: 30
+      dim_transition_seconds: 20
+  mode: restart
+
