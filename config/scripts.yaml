@@ -517,8 +517,9 @@ verifier_et_actionner_store:
 # ============================================================
 dim_rezchausse_mode_tv:
   alias: Lumiere | Rez-de-chaussee | Dim pour mode TV salon
-  description: Enveloppe de transition_lights_kelvin_then_dim_to_pct pour le mode TV salon (foyer, salle a manger, cuisine + salon 1-4, 2400K, dim salon 2/3 a 30%).
+  description: Enveloppe de transition_lights_kelvin_then_dim_to_pct pour le mode TV salon (foyer, salle a manger, cuisine + salon 1/4, 2400K, extinction si allumees; salon 2/3 toujours allumes a 30%).
   sequence:
+  # Foyer, salle a manger, cuisine + salon 1/4 : seulement si deja allumees
   - action: script.transition_lights_kelvin_then_dim_to_pct
     data:
       area_list:
@@ -527,17 +528,23 @@ dim_rezchausse_mode_tv:
         - cuisine
       light_list:
         - light.salon_1
-        - light.salon_2
-        - light.salon_3
         - light.salon_4
       color_temp_kelvin: 2400
       kelvin_transition_seconds: 10
       end_brightness_pct: 0
-      per_light_end_brightness_pct:
-        light.salon_2: 30
-        light.salon_3: 30
       dim_transition_seconds: 20
       only_if_already_on: true
+  # Salon 2 et 3 : toujours allumes a 30%, meme si eteints
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      light_list:
+        - light.salon_2
+        - light.salon_3
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 30
+      dim_transition_seconds: 20
+      only_if_already_on: false
   mode: restart
 
 dim_progressif_rezchausse_soir:
