@@ -919,22 +919,69 @@
   mode: single
 
 # ============================================================
-# [BUREAU LUC - COMPTE A REBOURS RETRAITE]
+# [MESSAGE RETRAITE - COMPTE A REBOURS RETRAITE]
 # ============================================================
 # Calcule le nombre de jours restants jusqu'au 1er mars 2027
 # et diffuse le message sur le Google Nest Hub du bureau Luc.
-- id: 'bureau_luc_compte_rebours_retraite_2027'
-  alias: Bureau Luc | Compte a rebours retraite (1 mars 2027)
-  description: Diffuse le message de compte a rebours retraite sur le Google Nest Hub du bureau Luc.
+- id: 'message_retraite_compte_rebours_2027'
+  alias: Message Retraite 9h | Compte a rebours retraite (1 mars 2027)
+  description: Diffuse le message de compte a rebours retraite sur le Google.
   triggers:
   - trigger: time
-    at: '08:30:00'
+    at: '09:00:00'
   conditions: []
   actions:
-  # - action: notify.google_assistant_sdk
-  - action: google_assistant_sdk.send_text_command
+  - action: scene.create
     data:
-      command: "diffuse au bureau il te reste {{ states('sensor.nbjours1mars2027') }} de jours avant la RETRAITE"
+      scene_id: retraite_media_snapshot
+      snapshot_entities:
+        - media_player.luc
+        - media_player.vicki
+        - media_player.mini
+  - action: media_player.volume_set
+    target:
+      entity_id:
+        - media_player.luc
+        - media_player.vicki
+        - media_player.mini
+    data:
+      volume_level: 0.20
+  # - action: notify.google_assistant_sdk
+  - parallel:
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.luc
+        message: >-
+          {% set jours = states('sensor.nbjours1mars2027') | int(0) %}
+          {% set semaines = (jours / 7) | int %}
+          {% set mois = (jours / 30.44) | int %}
+          Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.vicki
+        message: >-
+          {% set jours = states('sensor.nbjours1mars2027') | int(0) %}
+          {% set semaines = (jours / 7) | int %}
+          {% set mois = (jours / 30.44) | int %}
+          Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.mini
+        message: >-
+          {% set jours = states('sensor.nbjours1mars2027') | int(0) %}
+          {% set semaines = (jours / 7) | int %}
+          {% set mois = (jours / 30.44) | int %}
+          Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
+  - delay: '00:00:10'
+  - action: scene.turn_on
+    target:
+      entity_id: scene.retraite_media_snapshot
   mode: single
 
 # - id: 'notification_remote_tv_pixel9a'
