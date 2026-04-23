@@ -969,6 +969,42 @@
       entity_id: scene.retraite_media_snapshot
   mode: single
 
+# ============================================================
+# [VERANDA - MESSAGE VOCAL MIDI SI TEMPERATURE > 20°C]
+# ============================================================
+# A midi tous les jours, si la temperature de la veranda depasse 20°C,
+# diffuse un message vocal sur le Google mini du salon.
+- id: 'veranda_noon_tts_if_warm'
+  alias: "Véranda | Midi | Message vocal si température > 20°C"
+  description: "A midi, si la véranda est au-dessus de 20°C, annonce qu'il fait beau pour dîner dehors."
+  triggers:
+    - trigger: time
+      at: '12:00:00'
+  conditions:
+    - condition: numeric_state
+      entity_id: sensor.veranda_temperature
+      above: 20
+  actions:
+    - action: media_player.volume_set
+      target:
+        entity_id: media_player.mini
+      data:
+        volume_level: 0.35
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.mini
+        message: >-
+          Il fait {{ states('sensor.veranda_temperature') | round(1) }} degrés dans la véranda, je crois que c'est une bonne idée de dîner là.
+    - delay: '00:00:05'
+    - action: media_player.volume_set
+      target:
+        entity_id: media_player.mini
+      data:
+        volume_level: 0.20
+  mode: single
+
 # - id: 'notification_remote_tv_pixel9a'
 #   alias: "TV | Notification | Pixel 9a via remote.tv"
 #   description: "Envoie TV ON/OFF sur le Pixel 9a selon l'état de remote.tv"
