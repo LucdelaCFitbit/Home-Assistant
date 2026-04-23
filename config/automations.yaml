@@ -996,8 +996,8 @@
       data:
         media_player_entity_id: media_player.mini
         message: >-
-          Il fait {{ states('sensor.veranda_temperature') | round(1) }} degrés dans la véranda, je crois que c'est une bonne idée de dîner là.
-    - delay: '00:00:05'
+          Il fait {{ states('sensor.veranda_temperature') | int }} degrés dans la véranda, je crois que c'est une bonne idée de dîner là.
+    - delay: '00:00:15'
     - action: media_player.volume_set
       target:
         entity_id: media_player.mini
