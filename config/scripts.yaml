@@ -468,6 +468,7 @@ verifier_et_actionner_store:
       example: 3
 
   sequence:
+    # === Première série d'essais ===
     - repeat:
         count: "{{ nombre_essais | int }}"
         sequence:
@@ -500,13 +501,57 @@ verifier_et_actionner_store:
               - stop: "Succès"
                 response_variable: script_response
 
-    # 4. Si on arrive ici, c'est que la boucle est finie sans succès
+    # === Nudge à 15% avant deuxième série (store bloqué après première série) ===
+    - action: cover.set_cover_position
+      target:
+        entity_id: "{{ store_entity }}"
+      data:
+        position: 15
+
+    - delay:
+        seconds: "{{ delay_seconds | int }}"
+
+    # === Deuxième série d'essais (après nudge à 15%) ===
+    - repeat:
+        count: "{{ nombre_essais | int }}"
+        sequence:
+          # 1. Envoyer la commande
+          - action: "cover.{{ action_type }}_cover"
+            target:
+              entity_id: "{{ store_entity }}"
+
+          # 2. Attendre le délai
+          - delay:
+              seconds: "{{ delay_seconds | int }}"
+
+          # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
+          - if:
+              - condition: template
+                value_template: >
+                  {% if action_type == 'close' %}
+                    {{ is_state(sensor_entity, 'off') }}
+                  {% else %}
+                    {{ is_state(sensor_entity, 'on') }}
+                  {% endif %}
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès après relance à 15% —
+                      {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+                      après {{ repeat.index }} tentative(s) supplémentaire(s).
+                    status: "succes"
+              - stop: "Succès après relance"
+                response_variable: script_response
+
+    # === Échec final après toutes les tentatives ===
     - variables:
         script_response:
           message: >-
             ⚠️ Échec critique Store —
             {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
-            est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s).
+            est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s) initiales
+            et {{ nombre_essais }} tentative(s) après relance à 15%.
             Action demandée : {{ action_type }}.
           status: "echec"
     - stop: "Échec"
@@ -618,4 +663,34 @@ dim_rezchausse_soir_test:
         light.salon_3: 30
       dim_transition_seconds: 20
   mode: restart
+
+# ============================================================
+# [NOTIFICATION BATTERIE CAPTEURS STORES]
+# ============================================================
+notifier_batterie_capteur_store:
+  alias: "Store | 🔋 | Notifier batterie capteur sur Pixel 9a"
+  description: "Vérifie la disponibilité d'un capteur de store, récupère le pourcentage de batterie et envoie une notification sur le Pixel 9a."
+  fields:
+    sensor_entity:
+      description: "Entity ID du capteur binaire de store (ex: binary_sensor.capteur_store_chambre_amie)"
+      example: binary_sensor.capteur_store_chambre_amie
+      required: true
+  sequence:
+  - condition: template
+    value_template: "{{ states(sensor_entity) != 'unavailable' }}"
+  - variables:
+      battery_entity: >-
+        {% set base = sensor_entity | replace('binary_sensor.', 'sensor.') %}
+        {% if base.endswith('_inverse') %}{{ base[:-8] }}_batterie{% else %}{{ base }}_batterie{% endif %}
+      capteur_nom: "{{ state_attr(sensor_entity, 'friendly_name') | default(sensor_entity) }}"
+      capteur_etat: "{{ 'Ouvert' if is_state(sensor_entity, 'on') else 'Fermé' }}"
+      batterie_pct: "{{ states(battery_entity) }}"
+  - action: notify.mobile_app_lucdelac
+    data:
+      title: "🔋 Batterie capteur store"
+      message: >-
+        {{ capteur_nom }}
+        État : {{ capteur_etat }}
+        Batterie : {{ batterie_pct }} %
+  mode: parallel
 

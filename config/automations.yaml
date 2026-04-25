@@ -837,71 +837,40 @@
   mode: single
 
 # ============================================================
-# [TEST BUREAU LUC - MESSAGE VOCAL 15H30]
+# [EXTERIEUR - ON AU COUCHER DU SOLEIL ET OFF A 23H]
 # ============================================================
-# A 15:30, envoie un message vocal sur le Google Nest Hub de Bureau Luc.
-- id: 'test_bureau_luc_voice_1530'
-  alias: ZZ Test | Bureau Luc | Message vocal 15h30
-  description: A 15:30, diffuse Bonne fin de journée Luc sur Bureau Luc Google Nest Hub.
+# Au coucher du soleil, active la scene Concentration pour les lumieres exterieures.
+# A 23:00, eteint les lumieres de la zone Exterieur.
+- id: 'exterieur_lights_on_sunset_off_23h'
+  alias: Lumiere | ON/OFF Extérieur
+  description: Active la scene Exterieur Concentration au coucher du soleil, puis eteint les lumieres exterieures a 23h00.
   triggers:
+  - trigger: sun
+    event: sunset
+    id: on_sunset
   - trigger: time
-    at: '15:30:00'
+    at: '23:00:00'
+    id: off_23h
   conditions: []
   actions:
-  - action: tts.speak
-    target:
-      entity_id: tts.google_translate_fr_ca
-    data:
-      media_player_entity_id: media_player.luc
-      message: 'Bonne fin de journée Luc'
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_sunset
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.exterieur_concentration
+    - conditions:
+      - condition: trigger
+        id: off_23h
+      sequence:
+      - action: light.turn_off
+        target:
+          area_id: exterieur
   mode: single
 
-# ============================================================
-# [TEST BUREAU LUC - MESSAGE VOCAL Meteo DEMAIN GOOGLE-LIKE]
-# ============================================================
-# Test manuel: style plus conversationnel, facon assistant vocal.
-- id: 'test_bureau_luc_diffuse_meteo_google_like'
-  alias: ZZ Test | Bureau Luc | Message vocal Meteo demain Google-like
-  description: Test manuel, diffuse la meteo de demain avec formulation conversationnelle.
-  triggers: []
-  conditions: []
-  actions:
-  - action: weather.get_forecasts
-    target:
-      entity_id: weather.forecast_maison
-    data:
-      type: daily
-    response_variable: meteo_demain
-  - action: tts.speak
-    target:
-      entity_id: tts.google_translate_fr_ca
-    data:
-      media_player_entity_id: media_player.luc
-      message: >-
-        {% set f = meteo_demain['weather.forecast_maison'].forecast[0] %}
-        {% set condition_map = {
-          'clear-night': 'ciel degage',
-          'cloudy': 'nuageux',
-          'exceptional': 'conditions exceptionnelles',
-          'fog': 'brumeux',
-          'hail': 'de la grele',
-          'lightning': 'des orages',
-          'lightning-rainy': 'des orages avec pluie',
-          'partlycloudy': 'partiellement nuageux',
-          'pouring': 'de fortes pluies',
-          'rainy': 'de la pluie',
-          'snowy': 'de la neige',
-          'snowy-rainy': 'de la neige fondante',
-          'sunny': 'du soleil',
-          'windy': 'du vent',
-          'windy-variant': 'un ciel variable et du vent'
-        } %}
-        {% set cond = condition_map.get(f.condition, f.condition) %}
-        {% set tmax = f.temperature | round(0) %}
-        {% set tmin = f.templow | round(0) %}
-        {% set pluie = f.precipitation_probability | default(none) %}
-        Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
-  mode: single
+
 
 # ============================================================
 # [MESSAGE RETRAITE - COMPTE A REBOURS RETRAITE]
@@ -1081,4 +1050,101 @@
         state: 'off'
       sequence:
       - action: script.dim_rezchausse_soir_test
+  mode: single
+
+# ============================================================
+# [TEST BUREAU LUC - MESSAGE VOCAL 15H30]
+# ============================================================
+# A 15:30, envoie un message vocal sur le Google Nest Hub de Bureau Luc.
+- id: 'test_bureau_luc_voice_1530'
+  alias: ZZ Test | Bureau Luc | Message vocal 15h30
+  description: A 15:30, diffuse Bonne fin de journée Luc sur Bureau Luc Google Nest Hub.
+  triggers:
+  - trigger: time
+    at: '15:30:00'
+  conditions: []
+  actions:
+  - action: tts.speak
+    target:
+      entity_id: tts.google_translate_fr_ca
+    data:
+      media_player_entity_id: media_player.luc
+      message: 'Bonne fin de journée Luc'
+  mode: single
+
+# ============================================================
+# [TEST BUREAU LUC - MESSAGE VOCAL Meteo DEMAIN GOOGLE-LIKE]
+# ============================================================
+# Test manuel: style plus conversationnel, facon assistant vocal.
+- id: 'test_bureau_luc_diffuse_meteo_google_like'
+  alias: ZZ Test | Bureau Luc | Message vocal Meteo demain Google-like
+  description: Test manuel, diffuse la meteo de demain avec formulation conversationnelle.
+  triggers: []
+  conditions: []
+  actions:
+  - action: weather.get_forecasts
+    target:
+      entity_id: weather.forecast_maison
+    data:
+      type: daily
+    response_variable: meteo_demain
+  - action: tts.speak
+    target:
+      entity_id: tts.google_translate_fr_ca
+    data:
+      media_player_entity_id: media_player.luc
+      message: >-
+        {% set f = meteo_demain['weather.forecast_maison'].forecast[0] %}
+        {% set condition_map = {
+          'clear-night': 'ciel degage',
+          'cloudy': 'nuageux',
+          'exceptional': 'conditions exceptionnelles',
+          'fog': 'brumeux',
+          'hail': 'de la grele',
+          'lightning': 'des orages',
+          'lightning-rainy': 'des orages avec pluie',
+          'partlycloudy': 'partiellement nuageux',
+          'pouring': 'de fortes pluies',
+          'rainy': 'de la pluie',
+          'snowy': 'de la neige',
+          'snowy-rainy': 'de la neige fondante',
+          'sunny': 'du soleil',
+          'windy': 'du vent',
+          'windy-variant': 'un ciel variable et du vent'
+        } %}
+        {% set cond = condition_map.get(f.condition, f.condition) %}
+        {% set tmax = f.temperature | round(0) %}
+        {% set tmin = f.templow | round(0) %}
+        {% set pluie = f.precipitation_probability | default(none) %}
+        Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
+  mode: single
+
+# ============================================================
+# [STORES - VERIFICATION QUOTIDIENNE BATTERIE CAPTEURS]
+# ============================================================
+# Chaque jour a 09:00, appelle le script notifier_batterie_capteur_store
+# en parallele pour les 4 capteurs de stores.
+# Le script verifie la disponibilite, recupere la batterie et
+# envoie une notification sur le Pixel 9a si le capteur est disponible.
+- id: 'check_batterie_capteurs_stores_quotidien'
+  alias: "Store | 🔋 | Vérification quotidienne batterie capteurs"
+  description: "Chaque jour à 09:00, vérifie la batterie des 4 capteurs de stores et envoie une notification sur le Pixel 9a pour chaque capteur disponible."
+  triggers:
+  - trigger: time
+    at: '09:00:00'
+  conditions: []
+  actions:
+  - parallel:
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_chambre_amie
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_bureau_luc
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_salon_inverse
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_salle_a_manger_inverse
   mode: single
