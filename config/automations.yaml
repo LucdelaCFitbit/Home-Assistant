@@ -899,7 +899,7 @@
         - media_player.vicki
         - media_player.mini
     data:
-      volume_level: 0.20
+      volume_level: 0.30
   # - action: notify.google_assistant_sdk
   - parallel:
     - action: tts.speak
@@ -958,7 +958,7 @@
       target:
         entity_id: media_player.mini
       data:
-        volume_level: 0.35
+        volume_level: 0.40
     - action: tts.speak
       target:
         entity_id: tts.google_translate_fr_ca

@@ -501,6 +501,69 @@ verifier_et_actionner_store:
               - stop: "Succès"
                 response_variable: script_response
 
+    # === Échec final après toutes les tentatives ===
+    # TODO: Réactiver le nudge à 15% et la deuxième série d'essais une fois les capteurs corrigés
+    - variables:
+        script_response:
+          message: >-
+            ⚠️ Échec Store —
+            {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+            est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s).
+            Action demandée : {{ action_type }}.
+          status: "echec"
+    - stop: "Échec"
+      response_variable: script_response
+
+backup_verifier_et_actionner_store:
+  alias: "Test | Vérification dynamique store avec répétition"
+  mode: parallel
+  fields:
+    store_entity:
+      description: "L'entité du store (ex: cover.chambre_ami)"
+    sensor_entity:
+      description: "Le capteur (ex: binary_sensor.capteur_store_chambre_amie)"
+    action_type:
+      description: "close ou open"
+    delay_seconds:
+      description: "Délai entre chaque tentative"
+    nombre_essais:
+      description: "Nombre maximum de tentatives avant notification"
+      example: 3
+
+  sequence:
+    # === Première série d'essais ===
+    - repeat:
+        count: "{{ nombre_essais | int }}"
+        sequence:
+          # 1. Envoyer la commande
+          - action: "cover.{{ action_type }}_cover"
+            target:
+              entity_id: "{{ store_entity }}"
+
+          # 2. Attendre le délai
+          - delay:
+              seconds: "{{ delay_seconds | int }}"
+
+          # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
+          - if:
+              - condition: template
+                value_template: >
+                  {% if action_type == 'close' %}
+                    {{ is_state(sensor_entity, 'off') }}
+                  {% else %}
+                    {{ is_state(sensor_entity, 'on') }}
+                  {% endif %}
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès —
+                      {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+                      après {{ repeat.index }} tentative(s).
+                    status: "succes"
+              - stop: "Succès"
+                response_variable: script_response
+
     # === Nudge à 15% avant deuxième série (store bloqué après première série) ===
     - action: cover.set_cover_position
       target:
@@ -556,7 +619,6 @@ verifier_et_actionner_store:
           status: "echec"
     - stop: "Échec"
       response_variable: script_response
-
 # ============================================================
 # [ENVELOPPES - TRANSITION KELVIN PUIS DIM]
 # ============================================================
