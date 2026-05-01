@@ -418,6 +418,9 @@ toggle_poules:
               target:
                 entity_id: light.poulailler
       default:
+        - condition: sun
+          after: sunrise
+          before: sunset
         - action: scene.turn_on
           target:
             entity_id: scene.poulailler_concentration

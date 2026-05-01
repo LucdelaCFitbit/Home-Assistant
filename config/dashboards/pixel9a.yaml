@@ -238,6 +238,8 @@ views:
           - entity: lock.porte
           - entity: binary_sensor.porte_porte
           - entity: sensor.porte_temps_deverrouillee
+          - entity: sensor.veranda_temperature
+          - entity: sensor.veranda_humidite
           - entity: weather.forecast_maison
           - entity: input_select.house_profile
 
