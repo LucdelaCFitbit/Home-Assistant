@@ -487,6 +487,19 @@ verifier_et_actionner_store:
           # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
           - if:
               - condition: template
+                value_template: "{{ is_state(sensor_entity, 'unavailable') }}"
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ⚠️ Capteur non disponible —
+                      {{ state_attr(sensor_entity, 'friendly_name') | default(sensor_entity) }} ({{ sensor_entity }})
+                      Impossible de vérifier l'état du store {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }}).
+                    status: "capteur_indisponible"
+              - stop: "Capteur non disponible"
+                response_variable: script_response
+          - if:
+              - condition: template
                 value_template: >
                   {% if action_type == 'close' %}
                     {{ is_state(sensor_entity, 'off') }}
