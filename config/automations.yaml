@@ -668,11 +668,18 @@
   triggers:
   - trigger: time
     at: '22:30:00'
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: person.maison
+    state: 'not_home'
   actions:
   - delay:
       seconds: "{{ range(0, 3601) | random }}"
   - action: script.night_shutdown_except_adresse
+  - action: notify.mobile_app_lucdelac
+    data:
+      title: "💡 Lumières éteintes"
+      message: "Toutes les lumières (sauf Adresse) ont été éteintes automatiquement à {{ now().strftime('%H:%M') }}."
   mode: single
 
 # ============================================================
