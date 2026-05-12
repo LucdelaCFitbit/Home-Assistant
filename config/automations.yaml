@@ -672,6 +672,8 @@
   - condition: state
     entity_id: person.maison
     state: 'not_home'
+  - condition: template
+    value_template: "{{ (now() - states.person.maison.last_changed).total_seconds() > 120 }}"
   actions:
   - delay:
       seconds: "{{ range(0, 3601) | random }}"
@@ -1155,3 +1157,48 @@
       data:
         sensor_entity: binary_sensor.capteur_store_salle_a_manger_inverse
   mode: single
+
+# ============================================================
+# [PRÉSENCE - Statut téléphone par courriel Gmail]
+# ============================================================
+- id: 'presence_phone_status_email_notification'
+  alias: "Présence | 📱 | Courriel Gmail - Statut téléphone arrivée/départ"
+  description: "Envoie un courriel Gmail quand person.maison change d'état (home/not_home)."
+  triggers:
+  - trigger: state
+    entity_id: person.maison
+    to: 'home'
+    for: '00:02:00'
+    id: arrived
+  - trigger: state
+    entity_id: person.maison
+    to: 'not_home'
+    for: '00:02:00'
+    id: departed
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: person.maison
+        state: 'home'
+      sequence:
+      - action: notify.gmail_alerte
+        data:
+          title: "📱 Téléphone – Arrivée à la maison"
+          message: >
+            Le téléphone ({{ state_attr('person.maison', 'friendly_name') | default('person.maison') }})
+            est arrivé à la maison à {{ now().strftime('%H:%M') }} le {{ now().strftime('%d/%m/%Y') }}.
+    - conditions:
+      - condition: state
+        entity_id: person.maison
+        state: 'not_home'
+      sequence:
+      - action: notify.gmail_alerte
+        data:
+          title: "📱 Téléphone – Départ de la maison"
+          message: >
+            Le téléphone ({{ state_attr('person.maison', 'friendly_name') | default('person.maison') }})
+            a quitté la maison à {{ now().strftime('%H:%M') }} le {{ now().strftime('%d/%m/%Y') }}.
+  mode: queued
+  max: 5
