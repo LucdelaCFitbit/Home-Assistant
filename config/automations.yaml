@@ -5,18 +5,19 @@
 # - Chaque bloc correspond a un usage (protection, fermeture, ouverture)
 # - Les IDs restent stables pour ne pas casser les references HA
 # - Les conditions andre_mode protegent uniquement les stores salon/salle a manger
+# - guest_mode affecte les lumieres seulement, pas les stores
 # ============================================================
-# [SECTION AVEC ANDRE_MODE OU INVITE_MODE ACTIF, ON NE FERME PAS LES STORES SALON/SALLE A MANGER]
+# [SECTION AVEC ANDRE_MODE ACTIF, ON NE FERME PAS LES STORES SALON/SALLE A MANGER]
 # DEBUT SECTION
 # ============================================================
 # ============================================================
 # [FERMETURE EN FIN DE JOURNEE]
 # ============================================================
 # Au coucher du soleil, ferme salon + salle a manger, puis répète après 1 et 2 minutes
-# uniquement si andre_mode ou guest_mode est OFF.
+# uniquement si andre_mode est OFF (guest_mode n'affecte pas les stores).
 - id: 'sunset_close_salon_dining_covers'
   alias: Store | 🌅 | Fermer stores salon et salle a manger
-  description: Ferme les stores salon et salle à manger au coucher du soleil via le script de vérification, sauf si andre_mode ou guest_mode est actif.
+  description: Ferme les stores salon et salle à manger au coucher du soleil via le script de vérification, sauf si andre_mode est actif.
   triggers:
   - trigger: sun
     event: sunset
@@ -24,9 +25,6 @@
   conditions:
   - condition: state
     entity_id: input_boolean.andre_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.guest_mode
     state: 'off'
   actions:
   - parallel:
