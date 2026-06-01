@@ -289,6 +289,14 @@ views:
             tap_action:
               action: toggle
           - type: custom:mushroom-template-card
+            primary: Luc absent
+            secondary: "{{ 'Absent' if is_state('input_boolean.luc_absent', 'on') else 'À la maison' }}"
+            icon: mdi:account-arrow-right
+            icon_color: "{{ 'red' if is_state('input_boolean.luc_absent', 'on') else 'disabled' }}"
+            entity: input_boolean.luc_absent
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
             primary: Focus
             secondary: "{{ 'Actif' if is_state('timer.focus_session', 'active') else 'Inactif' }}"
             icon: mdi:timer

@@ -11,6 +11,9 @@ input_boolean:
   vacances:
     name: Vacances
     icon: mdi:beach
+  luc_absent:
+    name: Luc Absent
+    icon: mdi:account-arrow-right
 
 input_select:
   house_profile:
