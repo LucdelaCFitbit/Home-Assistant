@@ -708,7 +708,6 @@
     - tue
     - wed
     - thu
-    - fri
   actions:
   - choose:
     - conditions:
