@@ -142,7 +142,7 @@
           sensor_entity: binary_sensor.capteur_store_chambre_amie
           action_type: "open"
           delay_seconds: 30
-          nombre_essais: 3
+          nombre_essais: 4
         response_variable: retour_chambre
       - action: script.verifier_et_actionner_store
         data:
@@ -150,7 +150,7 @@
           sensor_entity: binary_sensor.capteur_store_bureau_luc
           action_type: "open"
           delay_seconds: 30
-          nombre_essais: 3
+          nombre_essais: 4
         response_variable: retour_bureau
       - action: script.verifier_et_actionner_store
         data:
