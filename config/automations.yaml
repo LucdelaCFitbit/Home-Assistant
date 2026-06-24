@@ -960,7 +960,9 @@
       data:
         media_player_entity_id: media_player.mini
         message: >-
-          Il fait {{ states('sensor.veranda_temperature') | int }} degrés dans la véranda, je crois que c'est une bonne idée de dîner là.
+          {% set temp = states('sensor.veranda_temperature') | int %}
+          Il fait {{ temp }} degrés dans la véranda, je crois que c'est une bonne idée de dîner là.
+          {% if temp > 28 %} Parcontre vous devriez ouvrir les fenêtres de la véranda car il fait {{ temp }} degrés.{% endif %}
     - delay: '00:00:15'
     - action: media_player.volume_set
       target:
