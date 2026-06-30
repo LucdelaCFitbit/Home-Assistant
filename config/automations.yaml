@@ -304,6 +304,21 @@
       data:
         datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
     - delay: '00:15:00'
+    - repeat:
+        while:
+          - condition: state
+            entity_id: binary_sensor.porte_porte
+            state: 'on'
+          - condition: state
+            entity_id: lock.porte
+            state: 'unlocked'
+        sequence:
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.porte_compte_rebours_depart
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          - delay: '00:15:00'
     - if:
         - condition: state
           entity_id: lock.porte
