@@ -37,3 +37,24 @@
       state: >-
         {% set diff = (strptime('2027-03-01', '%Y-%m-%d').date() - now().date()).days %}
         {{ [diff, 0] | max }}
+
+- trigger:
+    - platform: time_pattern
+      seconds: /15
+    - platform: state
+      entity_id: binary_sensor.porte_porte
+  sensor:
+    - name: Temps porte ouverte
+      unique_id: temps_porte_ouverte
+      icon: mdi:door-open
+      state: >-
+        {% if is_state('binary_sensor.porte_porte', 'on') %}
+          {% set delta = (now() - states.binary_sensor.porte_porte.last_changed).total_seconds() | int %}
+          {% set h = delta // 3600 %}
+          {% set m = (delta % 3600) // 60 %}
+          {% set sec = delta % 60 %}
+          {% if h > 0 %}{{ h }}h {{ '%02d' % m }}m{% else %}{{ m }}m {{ '%02d' % sec }}s{% endif %}
+        {% else %}
+          {% set last = this.state if this.state is defined else '' %}
+          {% if 'Fermée' in last %}{{ last }}{% elif last in ['', 'unknown', 'unavailable'] %}Fermée{% else %}Fermée · {{ last }}{% endif %}
+        {% endif %}

@@ -6,31 +6,38 @@ views:
     cards:
       - type: custom:mushroom-title-card
         title: Pixel 9a
-        subtitle: Vue principale
+        subtitle: "Profil · {{ states('input_select.house_profile') }}"
 
-      - type: custom:mushroom-template-card
-        primary: Controle rapide
-        secondary: Modes maison, invite, Andre, Focus…
-        icon: mdi:tune
-        icon_color: green
-        tap_action:
-          action: navigate
-          navigation_path: /pixel-9a/controle-rapide
-
-      - type: custom:mushroom-template-card
-        primary: Actions rapides
-        secondary: Bonne nuit, verrouiller porte…
-        icon: mdi:lightning-bolt
-        icon_color: orange
-        tap_action:
-          action: navigate
-          navigation_path: /pixel-9a/actions-rapides
+      - type: custom:mushroom-chips-card
+        chips:
+          - type: template
+            icon: mdi:tune
+            icon_color: green
+            content: Contrôle
+            tap_action:
+              action: navigate
+              navigation_path: /pixel-9a/controle-rapide
+          - type: template
+            icon: mdi:lightning-bolt
+            icon_color: orange
+            content: Actions
+            tap_action:
+              action: navigate
+              navigation_path: /pixel-9a/actions-rapides
+          - type: template
+            icon: mdi:blinds
+            icon_color: cyan
+            content: Stores
+            tap_action:
+              action: navigate
+              navigation_path: /pixel-9a/stores
 
       - type: custom:mushroom-template-card
         primary: Poules
         secondary: "{{ 'Allumé' if is_state('light.poulailler', 'on') else 'Éteint' }}"
         icon: mdi:egg
         icon_color: "{{ 'yellow' if is_state('light.poulailler', 'on') else 'disabled' }}"
+        layout: horizontal
         entity: light.poulailler
         tap_action:
           action: perform-action
@@ -167,15 +174,6 @@ views:
             show_brightness_control: true
             collapsible_controls: true
 
-      - type: custom:mushroom-template-card
-        primary: Regroupes Stores
-        secondary: Accès à tous les stores de la maison
-        icon: mdi:blinds
-        icon_color: cyan
-        tap_action:
-          action: navigate
-          navigation_path: /pixel-9a/stores
-
       - type: custom:mushroom-media-player-card
         entity: media_player.tele_qn50ls03aafxzc
         name: TV Salon
@@ -185,19 +183,57 @@ views:
           - volume_mute
           - volume_set
 
-      - type: entities
+      - type: custom:mushroom-title-card
         title: Statuts maison
-        show_header_toggle: false
-        entities:
-          - entity: lock.porte
-          - entity: binary_sensor.porte_porte
-          - entity: sensor.porte_temps_deverrouillee
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Porte
+            secondary: "{{ 'Verrouillé' if is_state('lock.porte', 'locked') else 'Déverrouillé' }}"
+            icon: mdi:door-closed-lock
+            icon_color: "{{ 'red' if is_state('lock.porte', 'unlocked') else 'green' }}"
+            entity: lock.porte
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: binary_sensor.porte_porte
+            name: Capteur porte
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: sensor.porte_temps_deverrouillee
             name: Temps déverrouillée
-          - entity: sensor.veranda_temperature
-          - entity: sensor.veranda_humidite
-          - entity: weather.forecast_maison
-          - entity: input_select.house_profile
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: sensor.temps_porte_ouverte
+            name: Temps ouvert
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: sensor.veranda_temperature
+            name: Temp. véranda
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: sensor.veranda_humidite
+            name: Humid. véranda
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: weather.forecast_maison
+            name: Météo
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: input_select.house_profile
             name: Profil maison
+            icon: mdi:home-account
+            tap_action:
+              action: more-info
 
   - title: Controle rapide
     path: controle-rapide
