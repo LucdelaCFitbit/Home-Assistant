@@ -4,9 +4,19 @@ views:
     path: mobile
     icon: mdi:cellphone
     cards:
-      - type: custom:mushroom-title-card
-        title: Pixel 9a
-        subtitle: "Profil · {{ states('input_select.house_profile') }}"
+      - type: custom:mushroom-template-card
+        primary: Pixel 9a
+        secondary: >-
+          {% set modes = [] %}
+          {% if is_state('input_boolean.guest_mode', 'on') %}{% set modes = modes + ['Invité'] %}{% endif %}
+          {% if is_state('input_boolean.andre_mode', 'on') %}{% set modes = modes + ['André'] %}{% endif %}
+          {% if is_state('input_boolean.vacances', 'on') %}{% set modes = modes + ['Vacances'] %}{% endif %}
+          {% if is_state('input_boolean.luc_absent', 'on') %}{% set modes = modes + ['Luc absent'] %}{% endif %}
+          {{ modes | join(' · ') if modes else states('input_select.house_profile') }}
+        icon: mdi:cellphone
+        icon_color: blue
+        tap_action:
+          action: none
 
       - type: custom:mushroom-chips-card
         chips:
@@ -258,7 +268,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Invite
-            secondary: "{{ 'Activé' if is_state('input_boolean.guest_mode', 'on') else 'Désactivé' }}"
+            secondary: "{{ 'Activé · ' if is_state('input_boolean.guest_mode', 'on') else '' }}Pause atténuation & mode TV"
             icon: mdi:account-multiple
             icon_color: "{{ 'yellow' if is_state('input_boolean.guest_mode', 'on') else 'disabled' }}"
             entity: input_boolean.guest_mode
@@ -266,7 +276,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Andre
-            secondary: "{{ 'Activé' if is_state('input_boolean.andre_mode', 'on') else 'Désactivé' }}"
+            secondary: "{{ 'Activé · ' if is_state('input_boolean.andre_mode', 'on') else '' }}Pause stores, soirée & TV"
             icon: mdi:account
             icon_color: "{{ 'yellow' if is_state('input_boolean.andre_mode', 'on') else 'disabled' }}"
             entity: input_boolean.andre_mode
@@ -274,7 +284,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Vacances
-            secondary: "{{ 'Activé' if is_state('input_boolean.vacances', 'on') else 'Désactivé' }}"
+            secondary: "{{ 'Activé · ' if is_state('input_boolean.vacances', 'on') else '' }}Pause réveil & bureau"
             icon: mdi:palm-tree
             icon_color: "{{ 'yellow' if is_state('input_boolean.vacances', 'on') else 'disabled' }}"
             entity: input_boolean.vacances
@@ -282,7 +292,7 @@ views:
               action: toggle
           - type: custom:mushroom-template-card
             primary: Luc absent
-            secondary: "{{ 'Absent' if is_state('input_boolean.luc_absent', 'on') else 'À la maison' }}"
+            secondary: "{{ 'Activé · ' if is_state('input_boolean.luc_absent', 'on') else '' }}Extinction auto ~22h30"
             icon: mdi:account-arrow-right
             icon_color: "{{ 'red' if is_state('input_boolean.luc_absent', 'on') else 'disabled' }}"
             entity: input_boolean.luc_absent
@@ -351,6 +361,17 @@ views:
               perform_action: script.turn_on
               target:
                 entity_id: script.lock_porte_securise
+              confirmation: true
+          - type: custom:mushroom-template-card
+            primary: Off sauf chambre
+            secondary: Éteint tout sauf chambre maîtres
+            icon: mdi:lightbulb-off
+            icon_color: blue-grey
+            tap_action:
+              action: perform-action
+              perform_action: script.turn_on
+              target:
+                entity_id: script.lights_off_sauf_chambre
               confirmation: true
 
   - title: Stores

@@ -444,6 +444,25 @@ turn_off_all_lights_except_adresse:
     target:
       entity_id: "{{ lights_to_turn_off }}"
   mode: single
+lights_off_sauf_chambre:
+  alias: Lumiere | Eteindre tout sauf chambre
+  description: Eteint toutes les lumieres allumees sauf celles de la chambre des maitres.
+  sequence:
+  - variables:
+      lights_to_turn_off: >-
+        {{
+          states.light
+          | selectattr('state', 'eq', 'on')
+          | map(attribute='entity_id')
+          | reject('in', area_entities('chambre') + area_entities('adresse'))
+          | list
+        }}
+  - condition: template
+    value_template: "{{ lights_to_turn_off | count > 0 }}"
+  - action: light.turn_off
+    target:
+      entity_id: "{{ lights_to_turn_off }}"
+  mode: single
 night_shutdown_except_adresse:
   alias: Nuit | Extinction sauf Adresse
   description: Verrouille la porte, eteint toutes les lumieres sauf Adresse et coupe la TV si necessaire.
