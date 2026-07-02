@@ -42,16 +42,27 @@ views:
               action: navigate
               navigation_path: /pixel-9a/stores
 
-      - type: custom:mushroom-template-card
-        primary: Poules
-        secondary: "{{ 'Allumé' if is_state('light.poulailler', 'on') else 'Éteint' }}"
-        icon: mdi:egg
-        icon_color: "{{ 'yellow' if is_state('light.poulailler', 'on') else 'disabled' }}"
-        layout: horizontal
-        entity: light.poulailler
-        tap_action:
-          action: perform-action
-          perform_action: script.toggle_poules
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Poules
+            secondary: "{{ 'Allumé' if is_state('light.poulailler', 'on') else 'Éteint' }}"
+            icon: mdi:egg
+            icon_color: "{{ 'yellow' if is_state('light.poulailler', 'on') else 'disabled' }}"
+            layout: horizontal
+            entity: light.poulailler
+            tap_action:
+              action: perform-action
+              perform_action: script.toggle_poules
+          - type: custom:mushroom-template-card
+            primary: Flash 30s
+            secondary: "{{ 'Jour seulement' if is_state('sun.sun', 'above_horizon') else 'Nuit - inactif' }}"
+            icon: mdi:alarm-light-outline
+            icon_color: "{{ 'orange' if is_state('sun.sun', 'above_horizon') else 'grey' }}"
+            layout: horizontal
+            tap_action:
+              action: perform-action
+              perform_action: script.flash_poulailler_30s
 
       - type: grid
         title: Pièces
