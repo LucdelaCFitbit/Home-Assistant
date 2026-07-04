@@ -245,6 +245,16 @@ views:
             tap_action:
               action: more-info
           - type: custom:mushroom-entity-card
+            entity: sensor.temperatureg_temperature
+            name: Temp. garage
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
+            entity: sensor.temperatureg_humidite
+            name: Humid. garage
+            tap_action:
+              action: more-info
+          - type: custom:mushroom-entity-card
             entity: weather.forecast_maison
             name: Météo
             tap_action:
