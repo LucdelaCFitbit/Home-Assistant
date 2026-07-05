@@ -680,10 +680,11 @@
   - delay:
       seconds: "{{ range(0, 3601) | random }}"
   - action: script.night_shutdown_except_adresse
-  - action: notify.gmail_alerte
+  - action: notify.home_assistant_smtp
     data:
       title: "💡 Lumières éteintes automatiquement"
       message: "Toutes les lumières (sauf Adresse) ont été éteintes automatiquement à {{ now().strftime('%H:%M') }}."
+      target: "lucdelac@gmail.com"
   mode: single
 
 # ============================================================
@@ -1186,22 +1187,44 @@
         entity_id: person.maison
         state: 'home'
       sequence:
-      - action: notify.gmail_alerte
+      - action: notify.home_assistant_smtp
         data:
           title: "📱 Téléphone – Arrivée à la maison"
           message: >
             Le téléphone ({{ state_attr('person.maison', 'friendly_name') | default('person.maison') }})
             est arrivé à la maison à {{ now().strftime('%H:%M') }} le {{ now().strftime('%d/%m/%Y') }}.
+          target: "lucdelac@gmail.com"
     - conditions:
       - condition: state
         entity_id: person.maison
         state: 'not_home'
       sequence:
-      - action: notify.gmail_alerte
+      - action: notify.home_assistant_smtp
         data:
           title: "📱 Téléphone – Départ de la maison"
           message: >
             Le téléphone ({{ state_attr('person.maison', 'friendly_name') | default('person.maison') }})
             a quitté la maison à {{ now().strftime('%H:%M') }} le {{ now().strftime('%d/%m/%Y') }}.
+          target: "lucdelac@gmail.com"
   mode: queued
   max: 5
+
+# ============================================================
+# [TEST SMTP]
+# ============================================================
+- id: 'test_smtp_notification'
+  alias: "ZZ Test | SMTP | Envoyer email de test"
+  description: "Envoie un email de test via le nouveau service SMTP configuré en UI. Déclencher manuellement depuis Developer Tools."
+  triggers: []
+  conditions: []
+  actions:
+  - action: notify.home_assistant_smtp
+    data:
+      title: "✅ Test SMTP – Home Assistant"
+      message: >
+        Ceci est un email de test envoyé par Home Assistant.
+        Serveur : smtp.gmail.com
+        Date : {{ now().strftime('%d/%m/%Y à %H:%M:%S') }}
+        Si vous recevez ce message, le service SMTP fonctionne correctement.
+      target: "lucdelac@gmail.com"
+  mode: single
