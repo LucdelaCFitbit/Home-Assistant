@@ -1228,3 +1228,36 @@
         Si vous recevez ce message, le service SMTP fonctionne correctement.
       target: "lucdelac@gmail.com"
   mode: single
+
+# ============================================================
+# [Camera C320WS - Mode confidentiel coucher/lever du soleil]
+# ============================================================
+- id: 'c320_mode_confidentiel'
+  alias: "C320WS | Poulailler | Mode confidentiel coucher/lever du soleil"
+  description: "Active le mode confidentiel au coucher du soleil, le désactive 1 heure après le lever du soleil."
+  triggers:
+  - trigger: sun
+    event: sunset
+    id: activer
+  - trigger: sun
+    event: sunrise
+    offset: '01:00:00'
+    id: desactiver
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: activer
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.poulailler_poulailler_porte_privacy
+    - conditions:
+      - condition: trigger
+        id: desactiver
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.poulailler_poulailler_porte_privacy
+  mode: single
