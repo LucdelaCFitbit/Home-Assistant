@@ -417,6 +417,33 @@
   mode: restart
 
 # ============================================================
+# [MODES - RETOUR AUTO A OFF APRES 12H]
+# ============================================================
+# Quand Andre ou Invite passe a ON, le mode revient a OFF apres 12h
+# s'il est encore actif a ce moment.
+- id: 'modes_andre_invite_auto_off_after_12h'
+  alias: Modes | Andre/Invite | Auto OFF apres 12h
+  description: Remet Andre et Invite a OFF 12h apres activation si encore ON.
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.andre_mode
+    - input_boolean.guest_mode
+    to: 'on'
+  conditions: []
+  actions:
+  - delay: '12:00:00'
+  - if:
+    - condition: template
+      value_template: "{{ is_state(trigger.entity_id, 'on') }}"
+    then:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: "{{ trigger.entity_id }}"
+  mode: parallel
+  max: 10
+
+# ============================================================
 # [REZ DE CHAUSSEE - ATTENUATION PROGRESSIVE 19H]
 # ============================================================
 # A 19:00, les lumieres du REZ DE CHAUSSEE passent progressivement
@@ -685,6 +712,38 @@
       title: "💡 Lumières éteintes automatiquement"
       message: "Toutes les lumières (sauf Adresse) ont été éteintes automatiquement à {{ now().strftime('%H:%M') }}."
       target: "lucdelac@gmail.com"
+  mode: single
+
+# ============================================================
+# [PRESENCE - LUC ABSENT VIA CALENDRIER]
+# ============================================================
+# Active input_boolean.luc_absent pendant les evenements du calendrier local
+# calendar.luc_absent (journee complete ou plage horaire).
+- id: 'luc_absent_from_calendar'
+  alias: "Présence | Luc absent | Synchronisation calendrier"
+  description: "Active Luc absent pendant les événements de calendar.luc_absent."
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: state
+    entity_id: calendar.luc_absent
+  - trigger: time_pattern
+    minutes: '/15'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: calendar.luc_absent
+        state: 'on'
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.luc_absent
+    default:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.luc_absent
   mode: single
 
 # ============================================================
