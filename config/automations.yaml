@@ -707,7 +707,7 @@
   - delay:
       seconds: "{{ range(0, 3601) | random }}"
   - action: script.night_shutdown_except_adresse
-  - action: notify.home_assistant_smtp
+  - action: notify.toutes_les_alertes
     data:
       title: "💡 Lumières éteintes automatiquement"
       message: "Toutes les lumières (sauf Adresse) ont été éteintes automatiquement à {{ now().strftime('%H:%M') }}."
@@ -1246,7 +1246,7 @@
         entity_id: person.maison
         state: 'home'
       sequence:
-      - action: notify.home_assistant_smtp
+      - action: notify.toutes_les_alertes
         data:
           title: "📱 Téléphone – Arrivée à la maison"
           message: >
@@ -1258,7 +1258,7 @@
         entity_id: person.maison
         state: 'not_home'
       sequence:
-      - action: notify.home_assistant_smtp
+      - action: notify.toutes_les_alertes
         data:
           title: "📱 Téléphone – Départ de la maison"
           message: >
@@ -1269,6 +1269,38 @@
   max: 5
 
 # ============================================================
+# [SOUS-SOL - MODE CHEVEUR]
+# ============================================================
+- id: 'sous_sol_mode_cheveur'
+  alias: "Sous-sol | 💡 | Mode Cheveur ON/OFF"
+  description: "Quand Cheveur est activé, applique Concentration 100% au sous-sol et désactive le capteur de mouvement Hue. Quand Cheveur est désactivé, éteint les lumières et réactive le capteur."
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.cheveur
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.cheveur
+        state: 'on'
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.sous_sol_concentration
+      - action: switch.turn_off
+        target:
+          entity_id: switch.hue_motion_bas_capteur_de_mouvement
+    default:
+    - action: light.turn_off
+      target:
+        entity_id: light.sous_sol
+    - action: switch.turn_on
+      target:
+        entity_id: switch.hue_motion_bas_capteur_de_mouvement
+  mode: restart
+
+# ============================================================
 # [TEST SMTP]
 # ============================================================
 - id: 'test_smtp_notification'
@@ -1277,7 +1309,7 @@
   triggers: []
   conditions: []
   actions:
-  - action: notify.home_assistant_smtp
+  - action: notify.toutes_les_alertes
     data:
       title: "✅ Test SMTP – Home Assistant"
       message: >

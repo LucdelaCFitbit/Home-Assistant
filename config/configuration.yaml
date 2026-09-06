@@ -61,5 +61,5 @@ notify:
   - name: toutes_les_alertes
     platform: group
     services:
-      - service: home_assistant_smtp
+      # - service: home_assistant_smtp
       - service: mobile_app_lucdelac

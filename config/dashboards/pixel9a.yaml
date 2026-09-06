@@ -375,6 +375,15 @@ views:
         square: false
         cards:
           - type: custom:mushroom-template-card
+            primary: Cheveur
+            secondary: >-
+              {{ 'Activé · Sous-sol Concentration + capteur OFF' if is_state('input_boolean.cheveur', 'on') else 'Désactivé · Sous-sol OFF + capteur ON' }}
+            icon: mdi:lightbulb-auto
+            icon_color: "{{ 'yellow' if is_state('input_boolean.cheveur', 'on') else 'disabled' }}"
+            entity: input_boolean.cheveur
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
             primary: Bonne nuit
             secondary: Lance la sequence de nuit
             icon: mdi:weather-night
