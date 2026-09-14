@@ -978,7 +978,7 @@
       data:
         media_player_entity_id: media_player.luc
         message: >-
-          {% set jours = states('sensor.nbjours1mars2027') | int(0) %}
+          {% set jours = states('sensor.NbJours15janvier2027') | int(0) %}
           {% set semaines = (jours / 7) | int %}
           {% set mois = (jours / 30.44) | int %}
           Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
@@ -988,7 +988,7 @@
       data:
         media_player_entity_id: media_player.vicki
         message: >-
-          {% set jours = states('sensor.nbjours1mars2027') | int(0) %}
+          {% set jours = states('sensor.NbJours15janvier2027') | int(0) %}
           {% set semaines = (jours / 7) | int %}
           {% set mois = (jours / 30.44) | int %}
           Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
@@ -998,7 +998,7 @@
       data:
         media_player_entity_id: media_player.mini
         message: >-
-          {% set jours = states('sensor.nbjours1mars2027') | int(0) %}
+          {% set jours = states('sensor.NbJours15janvier2027') | int(0) %}
           {% set semaines = (jours / 7) | int %}
           {% set mois = (jours / 30.44) | int %}
           Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.

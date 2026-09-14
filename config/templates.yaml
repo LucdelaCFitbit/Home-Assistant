@@ -30,12 +30,12 @@
         {% else %}
           0
         {% endif %}
-    - name: NbJours1Mars2027
-      unique_id: nb_jours_1_mars_2027
+    - name: NbJours15janvier2027
+      unique_id: nb_jours_15_janvier_2027
       unit_of_measurement: "j"
       icon: mdi:calendar-clock
       state: >-
-        {% set diff = (strptime('2027-03-01', '%Y-%m-%d').date() - now().date()).days %}
+        {% set diff = (strptime('2027-01-15', '%Y-%m-%d').date() - now().date()).days %}
         {{ [diff, 0] | max }}
 
 - trigger:
