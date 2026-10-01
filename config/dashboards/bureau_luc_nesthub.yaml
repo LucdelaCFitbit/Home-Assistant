@@ -8,4 +8,4 @@ views:
         content: >-
           # RETRAITE
 
-          Il te reste **{{ states('sensor.NbJours15janvier2027') }}** de jours avant la **RETRAITE**.
+          Il te reste **{{ states('sensor.nbjours1mars2027') }}** de jours avant la **RETRAITE**.
