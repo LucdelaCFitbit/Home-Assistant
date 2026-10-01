@@ -493,15 +493,15 @@
 # ============================================================
 # [LUMIERE - ON SALON, FOYER, SALLE A MANGER ET CUISINE]
 # ============================================================
-# Allume les lumieres 45 minutes avant le coucher du soleil
+# Allume les lumieres 90 minutes avant le coucher du soleil
 # en utilisant le scenario concentration a 100%.
-- id: 'lights_on_salon_foyer_dining_kitchen_45min_before_sunset'
+- id: 'lights_on_salon_foyer_dining_kitchen_90min_before_sunset'
   alias: Lumiere | ON Salon, Foyer, Salle a manger et cuisine
-  description: Active le scenario concentration a 100% 45 minutes avant le coucher du soleil.
+  description: Active le scenario concentration a 100% 90 minutes avant le coucher du soleil.
   triggers:
   - trigger: sun
     event: sunset
-    offset: '-00:45:00'
+    offset: '-01:30:00'
   conditions:
   - condition: state
     entity_id: remote.tv
