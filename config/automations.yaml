@@ -769,7 +769,6 @@
     state: 'off'
   - condition: time
     weekday:
-    - mon
     - tue
     - wed
     - thu
@@ -852,14 +851,14 @@
 # [CUISINE - ARMOIRE MATIN SAISONNIER]
 # ============================================================
 # De octobre a avril, active la scene Cuisine Nouveau scenario
-# a 06:35 les jours de semaine et a 07:30 la fin de semaine,
+# a 06:45 les jours de semaine et a 07:30 la fin de semaine,
 # puis eteint la lumiere Armoire a 09:00.
-- id: 'kitchen_armoire_morning_nov_to_apr'
+- id: 'kitchen_armoire_morning_oct_to_apr'
   alias: Lumiere | Cuisine | Armoire matin saisonnier
-  description: Active la scene Cuisine Nouveau scenario le matin de novembre a avril, puis eteint Armoire a 09:00.
+  description: Active la scene Cuisine Nouveau scenario le matin d'octobre a avril, puis eteint Armoire a 09:00.
   triggers:
   - trigger: time
-    at: '06:35:00'
+    at: '06:45:00'
     id: weekday_on
   - trigger: time
     at: '07:30:00'
@@ -884,8 +883,13 @@
         - fri
       sequence:
       - action: scene.turn_on
-        target:
+        target: 
           entity_id: scene.cuisine_nouveau_scenario
+      - action: light.turn_on
+        target:
+          entity_id: light.armoire
+        data:
+          brightness_pct: 20
     - conditions:
       - condition: trigger
         id: weekend_on
@@ -897,6 +901,11 @@
       - action: scene.turn_on
         target:
           entity_id: scene.cuisine_nouveau_scenario
+      - action: light.turn_on
+        target:
+          entity_id: light.armoire
+        data:
+          brightness_pct: 20
     - conditions:
       - condition: trigger
         id: turn_off
