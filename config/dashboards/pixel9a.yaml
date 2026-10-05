@@ -41,6 +41,13 @@ views:
             tap_action:
               action: navigate
               navigation_path: /pixel-9a/stores
+          - type: template
+            icon: mdi:lightbulb-group
+            icon_color: amber
+            content: Lumières
+            tap_action:
+              action: navigate
+              navigation_path: /lumieres-lab/mobile
 
       - type: horizontal-stack
         cards:
@@ -416,6 +423,25 @@ views:
               target:
                 entity_id: script.lights_off_sauf_chambre
               confirmation: true
+          - type: custom:mushroom-template-card
+            primary: Reboot HA 03:00
+            secondary: "{{ 'Planifié pour 03:00' if is_state('input_boolean.reboot_ha_3h', 'on') else 'Désactivé' }}"
+            icon: mdi:restart-alert
+            icon_color: "{{ 'red' if is_state('input_boolean.reboot_ha_3h', 'on') else 'disabled' }}"
+            entity: input_boolean.reboot_ha_3h
+            tap_action:
+              action: toggle
+          - type: custom:mushroom-template-card
+            primary: Annuler reboot 03:00
+            secondary: Désactive le redémarrage planifié
+            icon: mdi:close-circle-outline
+            icon_color: green
+            tap_action:
+              action: perform-action
+              perform_action: input_boolean.turn_off
+              target:
+                entity_id: input_boolean.reboot_ha_3h
+              confirmation: true
 
   - title: Stores
     path: stores
@@ -498,3 +524,4 @@ views:
                   - type: custom:mushroom-entity-card
                     entity: sensor.capteur_store_chambre_amie_batterie
                     name: Batterie capteur store chambre amie
+

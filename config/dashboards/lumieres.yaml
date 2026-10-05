@@ -1,0 +1,198 @@
+title: Lumieres
+views:
+  - title: Lumieres
+    path: mobile
+    icon: mdi:lightbulb-group
+    cards:
+      - type: custom:mushroom-title-card
+        title: Toutes les lumières
+        subtitle: Controle rapide depuis Pixel 9a
+
+      - type: custom:mushroom-template-card
+        primary: Résumé éclairage
+        secondary: >-
+          {% set ampoules = expand('light.ampoules_maison') %}
+          {{ ampoules | selectattr('state', 'eq', 'on') | list | count }} allumées / {{ ampoules | count }}
+        icon: mdi:lightbulb-multiple
+        icon_color: "{{ 'amber' if is_state('light.ampoules_maison', 'on') else 'disabled' }}"
+        tap_action:
+          action: none
+
+      - type: horizontal-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Tout allumer
+            secondary: Maison
+            icon: mdi:lightbulb-on-outline
+            icon_color: amber
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id: light.ampoules_maison
+              confirmation: true
+          - type: custom:mushroom-template-card
+            primary: Tout éteindre
+            secondary: Maison
+            icon: mdi:lightbulb-off-outline
+            icon_color: blue-grey
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_off
+              target:
+                entity_id: light.ampoules_maison
+              confirmation: true
+
+      - type: grid
+        title: Pièces principales
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.salon
+            name: Salon
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.salle_a_manger
+            name: Salle à manger
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.foyer
+            name: Foyer
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.entree_2
+            name: Entrée
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+
+      - type: grid
+        title: Salon détaillé
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.salon_1
+            name: Salon 1
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.salon_2
+            name: Salon 2
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.salon_3
+            name: Salon 3
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.salon_4
+            name: Salon 4
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+
+      - type: grid
+        title: Chambre principale
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.cote_luc
+            name: Côté Luc
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.cote_vicki
+            name: Côté Vicki
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-template-card
+            primary: Ambiance intime
+            secondary: Lumières tamisées
+            icon: mdi:candle
+            icon_color: deep-orange
+            tap_action:
+              action: perform-action
+              perform_action: light.turn_on
+              target:
+                entity_id:
+                  - light.cote_luc
+                  - light.cote_vicki
+              data:
+                brightness_pct: 8
+                hs_color: [350, 90]
+                transition: 3
+
+      - type: grid
+        title: Bureau et chambres
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.bureau_luc
+            name: Bureau Luc
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.bureau_luc_1
+            name: Bureau Luc 1
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.bureau_luc_2
+            name: Bureau Luc 2
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.armoire
+            name: Armoire
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.chambre_amis
+            name: Chambre amis
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+
+      - type: grid
+        title: Extérieur et sous-sol
+        columns: 2
+        square: false
+        cards:
+          - type: custom:mushroom-light-card
+            entity: light.sous_sol
+            name: Sous-sol
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.voliere
+            name: Volière
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true
+          - type: custom:mushroom-light-card
+            entity: light.poulailler
+            name: Poulailler
+            show_brightness_control: true
+            show_color_temp_control: true
+            collapsible_controls: true

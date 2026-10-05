@@ -17,6 +17,9 @@ input_boolean:
   luc_absent:
     name: Luc Absent
     icon: mdi:account-arrow-right
+  reboot_ha_3h:
+    name: Reboot HA 03h
+    icon: mdi:restart-alert
 
 input_select:
   house_profile:

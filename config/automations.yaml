@@ -1361,3 +1361,23 @@
         target:
           entity_id: switch.poulailler_poulailler_porte_privacy
   mode: single
+
+# ============================================================
+# [SYSTEM - REDEMARRAGE PLANIFIE 03H]
+# ============================================================
+- id: 'ha_scheduled_restart_0300_if_requested'
+  alias: "System | HA | Redemarrage planifie a 03:00"
+  description: "A 03:00, redemarre Home Assistant si input_boolean.reboot_ha_3h est ON, puis remet le drapeau OFF."
+  triggers:
+  - trigger: time
+    at: '03:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.reboot_ha_3h
+    state: 'on'
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.reboot_ha_3h
+  - action: homeassistant.restart
+  mode: single

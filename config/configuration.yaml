@@ -27,6 +27,13 @@ lovelace:
       show_in_sidebar: true
       require_admin: false
       filename: dashboards/pixel9a.yaml
+    lumieres-lab:
+      mode: yaml
+      title: Lumieres
+      icon: mdi:lightbulb-group
+      show_in_sidebar: true
+      require_admin: false
+      filename: dashboards/lumieres.yaml
     cell-mobile:
       mode: yaml
       title: Cellulaire
