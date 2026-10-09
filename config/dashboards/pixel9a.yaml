@@ -4,6 +4,20 @@ views:
     path: mobile
     icon: mdi:cellphone
     cards:
+      # Titre dynamique avec heure et profil maison
+      - type: custom:mushroom-title-card
+        title: >-
+          {% set h = now().hour %}
+          {% if h < 12 %}Bonjour 👋
+          {% elif h < 18 %}Bon après-midi 👋
+          {% else %}Bonsoir 👋{% endif %}
+          {% set icons = {
+            'sunny': '☀️', 'clear-night': '🌙', 'partlycloudy': '⛅', 'cloudy': '☁️',
+            'fog': '🌫️', 'rainy': '🌧️', 'pouring': '🌧️', 'lightning': '🌩️',
+            'lightning-rainy': '⛈️', 'snowy': '❄️', 'snowy-rainy': '🌨️',
+            'hail': '🌨️', 'windy': '💨', 'windy-variant': '💨', 'exceptional': '⚠️'
+          } %}
+          | {{ icons.get(states('weather.forecast_maison'), '🌡️') }} {{ state_attr('weather.forecast_maison', 'temperature') }}°C
       - type: custom:mushroom-template-card
         primary: Pixel 9a
         secondary: >-
