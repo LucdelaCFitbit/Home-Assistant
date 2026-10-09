@@ -1,0 +1,89 @@
+title: Mysa
+views:
+  - title: Mysa
+    path: thermostats
+    icon: mdi:thermostat
+    cards:
+      - type: custom:mushroom-title-card
+        title: Thermostats Mysa
+        subtitle: Controle rapide depuis Pixel 9a
+
+      - type: custom:mushroom-chips-card
+        alignment: center
+        chips:
+          - type: template
+            icon: mdi:fire
+            icon_color: "{{ 'deep-orange' if expand('climate.mysa_bureau_luc_thermostat', 'climate.mysa_salle_bain_sous_sol_thermostat', 'climate.mysa_chambre_amis_thermostat', 'climate.thermopompe_bas') | selectattr('attributes.hvac_action', 'in', ['heating']) | list | count > 0 else 'disabled' }}"
+            content: >-
+              {{ expand('climate.mysa_bureau_luc_thermostat', 'climate.mysa_salle_bain_sous_sol_thermostat', 'climate.mysa_chambre_amis_thermostat', 'climate.thermopompe_bas') | selectattr('attributes.hvac_action', 'in', ['heating']) | list | count }} en chauffe
+            tap_action:
+              action: none
+
+      - type: vertical-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Bureau Luc
+            secondary: >-
+              {{ state_attr('climate.mysa_bureau_luc_thermostat', 'current_temperature') }} °C
+              · {{ state_attr('climate.mysa_bureau_luc_thermostat', 'current_humidity') }} %
+            icon: mdi:thermostat
+            icon_color: "{{ 'deep-orange' if state_attr('climate.mysa_bureau_luc_thermostat', 'hvac_action') == 'heating' else 'disabled' }}"
+            tap_action:
+              action: none
+          - type: thermostat
+            entity: climate.mysa_bureau_luc_thermostat
+            name: Bureau Luc
+            features:
+              - type: climate-hvac-modes
+
+      - type: vertical-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Salle de bain sous-sol
+            secondary: >-
+              {{ state_attr('climate.mysa_salle_bain_sous_sol_thermostat', 'current_temperature') }} °C
+              · {{ state_attr('climate.mysa_salle_bain_sous_sol_thermostat', 'current_humidity') }} %
+            icon: mdi:thermostat
+            icon_color: "{{ 'deep-orange' if state_attr('climate.mysa_salle_bain_sous_sol_thermostat', 'hvac_action') == 'heating' else 'disabled' }}"
+            tap_action:
+              action: none
+          - type: thermostat
+            entity: climate.mysa_salle_bain_sous_sol_thermostat
+            name: Salle de bain sous-sol
+            features:
+              - type: climate-hvac-modes
+
+      - type: vertical-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Chambre amis
+            secondary: >-
+              {{ state_attr('climate.mysa_chambre_amis_thermostat', 'current_temperature') }} °C
+              · {{ state_attr('climate.mysa_chambre_amis_thermostat', 'current_humidity') }} %
+            icon: mdi:thermostat
+            icon_color: "{{ 'deep-orange' if state_attr('climate.mysa_chambre_amis_thermostat', 'hvac_action') == 'heating' else 'disabled' }}"
+            tap_action:
+              action: none
+          - type: thermostat
+            entity: climate.mysa_chambre_amis_thermostat
+            name: Chambre amis
+            features:
+              - type: climate-hvac-modes
+
+      - type: vertical-stack
+        cards:
+          - type: custom:mushroom-template-card
+            primary: Thermopompe bas
+            secondary: >-
+              {{ state_attr('climate.thermopompe_bas', 'current_temperature') }} °C
+              · {{ states('climate.thermopompe_bas') }}
+            icon: mdi:heat-pump
+            icon_color: "{{ 'deep-orange' if state_attr('climate.thermopompe_bas', 'hvac_action') == 'heating' else 'disabled' }}"
+            tap_action:
+              action: none
+          - type: thermostat
+            entity: climate.thermopompe_bas
+            name: Thermopompe bas
+            features:
+              - type: climate-hvac-modes
+              - type: climate-fan-modes

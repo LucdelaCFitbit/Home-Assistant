@@ -13,5 +13,10 @@
     "name": "Désactiver le SMTP",
     "id": "357c988cf5cd4dcca5c24f9ac5df71e6",
     "complete": true
+  },
+  {
+    "name": "bouton veille chambre",
+    "id": "0206f1f3077b4946be918682c52e51f2",
+    "complete": false
   }
 ]

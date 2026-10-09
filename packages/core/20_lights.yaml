@@ -1,0 +1,43 @@
+light:
+  - platform: group
+    name: Ampoules maison
+    unique_id: ampoules_maison
+    # Ampoules individuelles seulement (pas les pieces/zones Hue). Exclut poulailler et voliere.
+    entities:
+      - light.adresse
+      - light.arbre_1
+      - light.arbre_2
+      - light.armoire
+      - light.bureau_luc_1
+      - light.bureau_luc_2
+      - light.bureau_luc_3
+      - light.bureau_luc_4
+      - light.bureau_vicki_1
+      - light.bureau_vicki_2
+      - light.bureau_vicki_3
+      - light.bureau_vicki_4
+      - light.chambre_ami_2
+      - light.chambre_amis
+      - light.cote_luc
+      - light.cote_vicki
+      - light.exterieur_1
+      - light.exterieur_2
+      - light.foyer_1
+      - light.foyer_2
+      - light.garage
+      - light.hue_white_downlight_1
+      - light.noel
+      - light.plante
+      - light.salon_1
+      - light.salon_2
+      - light.salon_3
+      - light.salon_4
+      - light.salon_sur_pied_1
+      - light.salon_sur_pied_2
+      - light.sous_sol_1
+      - light.sous_sol_2
+      - light.sous_sol_3
+      - light.table_1
+      - light.table_2
+      - light.table_3
+      - light.table_4

@@ -1,0 +1,801 @@
+﻿set_home_mode_on:
+  alias: Set Home Mode On
+  description: Active le mode maison
+  sequence:
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.home_mode
+apply_scene_with_current_area_brightness:
+  alias: Lumiere | Appliquer scene et conserver brightness zone
+  description: Calcule la luminosite moyenne des lumieres allumees d'une zone, applique la scene puis restaure ce brightness.
+  fields:
+    area_id:
+      description: Identifiant de la zone Home Assistant (ex. salon, foyer).
+      example: salon
+      required: true
+    scene_entity:
+      description: Entite scene a appliquer.
+      example: scene.salon_detente
+      required: true
+  sequence:
+  - variables:
+      area_brightness_pct: >-
+        {% set area_lights = expand(area_entities(area_id))
+          | selectattr('domain', 'eq', 'light')
+          | selectattr('state', 'eq', 'on')
+          | list %}
+        {% set area_brightness = area_lights
+          | map(attribute='attributes.brightness')
+          | reject('equalto', none)
+          | list %}
+        {% if area_brightness | count > 0 %}
+          {{ ((area_brightness | sum / (area_brightness | count)) / 255 * 100) | round(0) }}
+        {% else %}
+          30
+        {% endif %}
+  - action: scene.turn_on
+    target:
+      entity_id: "{{ scene_entity }}"
+  - action: light.turn_on
+    target:
+      area_id: "{{ area_id }}"
+    data:
+      brightness_pct: "{{ area_brightness_pct | int }}"
+  mode: parallel
+# apply_scene_with_current_light_brightness:
+#   alias: Lumiere | Appliquer scene et conserver brightness par ampoule
+#   description: Sauvegarde le brightness de chaque lumiere allumee de la zone, applique la scene puis restaure le brightness par ampoule.
+#   fields:
+#     area_id:
+#       description: Identifiant de la zone Home Assistant (ex. salon, foyer).
+#       example: salon
+#       required: true
+#     scene_entity:
+#       description: Entite scene a appliquer.
+#       example: scene.salon_detente
+#       required: true
+#   sequence:
+#   - variables:
+#       on_lights_with_brightness: >-
+#         {% set ns = namespace(items=[]) %}
+#         {% for l in expand(area_entities(area_id)) %}
+#           {% if l.domain == 'light' and l.state == 'on' and l.attributes.brightness is not none %}
+#             {% set ns.items = ns.items + [{'entity_id': l.entity_id, 'brightness': l.attributes.brightness}] %}
+#           {% endif %}
+#         {% endfor %}
+#         {{ ns.items }}
+#       off_lights: >-
+#         {% set ns = namespace(items=[]) %}
+#         {% for l in expand(area_entities(area_id)) %}
+#           {% if l.domain == 'light' and l.state == 'off' %}
+#             {% set ns.items = ns.items + [l.entity_id] %}
+#           {% endif %}
+#         {% endfor %}
+#         {{ ns.items }}
+#   - action: scene.turn_on
+#     target:
+#       entity_id: "{{ scene_entity }}"
+#     data:
+#       transition: 0
+#   - repeat:
+#       for_each: "{{ on_lights_with_brightness }}"
+#       sequence:
+#       - action: light.turn_on
+#         target:
+#           entity_id: "{{ repeat.item.entity_id }}"
+#         data:
+#           brightness: "{{ repeat.item.brightness | int }}"
+#           transition: 0
+#   - condition: template
+#     value_template: "{{ off_lights | count > 0 }}"
+#   - action: light.turn_off
+#     target:
+#       entity_id: "{{ off_lights }}"
+#     data:
+#       transition: 0
+#   mode: parallel
+# transition_lights_kelvin_then_off_by_areas:
+#   alias: Lumiere | Transition Kelvin puis extinction par zones ou lumieres
+#   description: Applique une transition Kelvin aux lumieres compatibles des zones et/ou lumieres ciblees, puis eteint toutes les lumieres ciblees avec transition.
+#   fields:
+#     area_list:
+#       description: Liste des zones ciblees (ex. salon, foyer).
+#       example: "salon, foyer"
+#     light_list:
+#       description: Liste des lumieres ciblees (ex. light.bureau_luc_1, light.bureau_luc_2).
+#       example: "light.bureau_luc_1, light.bureau_luc_2"
+#     color_temp_kelvin:
+#       description: Temperature Kelvin a atteindre pour les lumieres compatibles.
+#       example: 2400
+#       required: true
+#     kelvin_transition_seconds:
+#       description: Duree de transition vers la temperature Kelvin (secondes).
+#       example: 20
+#       required: true
+#     off_transition_seconds:
+#       description: Duree de transition vers l'extinction (secondes).
+#       example: 25
+#       required: true
+#   sequence:
+#   - variables:
+#       all_target_lights: >-
+#         {% set ns = namespace(items=[]) %}
+#         {% if area_list is defined and area_list is not none %}
+#           {% set areas = [area_list] if area_list is string else area_list %}
+#           {% for a in areas %}
+#             {% set ns.items = ns.items + (area_entities(a) | select('match', '^light\\.') | list) %}
+#           {% endfor %}
+#         {% endif %}
+#         {% if light_list is defined and light_list is not none %}
+#           {% set lights = [light_list] if light_list is string else light_list %}
+#           {% for l in lights %}
+#             {% if l is string and l.startswith('light.') %}
+#               {% set ns.items = ns.items + [l] %}
+#             {% endif %}
+#           {% endfor %}
+#         {% endif %}
+#         {{ ns.items | unique | list }}
+#       color_temp_lights: >-
+#         {% set ns = namespace(items=[]) %}
+#         {% for e in all_target_lights %}
+#           {% set modes = state_attr(e, 'supported_color_modes') | default([], true) %}
+#           {% if 'color_temp' in modes %}
+#             {% set ns.items = ns.items + [e] %}
+#           {% endif %}
+#         {% endfor %}
+#         {{ ns.items }}
+#       kelvin_transition_safe: "{{ [0, kelvin_transition_seconds | int(0)] | max }}"
+#       off_transition_safe: "{{ [0, off_transition_seconds | int(0)] | max }}"
+#   - condition: template
+#     value_template: "{{ all_target_lights | count > 0 }}"
+#   - choose:
+#     - conditions:
+#       - condition: template
+#         value_template: "{{ color_temp_lights | count > 0 }}"
+#       sequence:
+#       - action: light.turn_on
+#         target:
+#           entity_id: "{{ color_temp_lights }}"
+#         data:
+#           color_temp_kelvin: "{{ color_temp_kelvin | int(2400) }}"
+#           transition: "{{ kelvin_transition_safe | int }}"
+#       - if: "{{ kelvin_transition_safe | int > 0 }}"
+#         then:
+#         - delay:
+#             seconds: "{{ kelvin_transition_safe | int + 2 }}"
+#   - action: light.turn_off
+#     target:
+#       entity_id: "{{ all_target_lights }}"
+#     data:
+#       transition: "{{ off_transition_safe | int }}"
+#   mode: parallel
+transition_lights_kelvin_then_dim_to_pct:
+  alias: Lumiere | Transition Kelvin puis dim a pourcentage
+  description: Applique une transition Kelvin aux lumieres compatibles des zones et/ou lumieres ciblees, puis dimme jusqu'au pourcentage cible (global ou par lumiere). Optionnellement, peut ignorer les lumieres deja eteintes.
+  fields:
+    area_list:
+      description: Liste des zones ciblees (ex. salon, foyer).
+      example: "salon, foyer"
+    light_list:
+      description: Liste des lumieres ciblees (ex. light.bureau_luc_1, light.bureau_luc_2).
+      example: "light.bureau_luc_1, light.bureau_luc_2"
+    color_temp_kelvin:
+      description: Temperature Kelvin a atteindre pour les lumieres compatibles.
+      example: 2400
+      required: true
+    kelvin_transition_seconds:
+      description: Duree de transition vers la temperature Kelvin (secondes).
+      example: 20
+      required: true
+    end_brightness_pct:
+      description: Pourcentage final de luminosite (0-100). 0 signifie extinction complete.
+      example: 30
+      required: true
+    per_light_end_brightness_pct:
+      description: Mapping optionnel par lumiere (entity_id -> pourcentage final 0-100), ex. light.bureau_luc_1=20, light.bureau_luc_2=60.
+      example: "light.bureau_luc_1: 20, light.bureau_luc_2: 60"
+    dim_transition_seconds:
+      description: Duree de transition vers le pourcentage final (secondes).
+      example: 25
+      required: true
+    only_if_already_on:
+      description: Si true, applique les actions uniquement aux lumieres deja allumees (ne rallume pas les lumieres eteintes).
+      example: true
+  sequence:
+  - variables:
+      all_target_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% if area_list is defined and area_list is not none %}
+          {% set areas = [area_list] if area_list is string else area_list %}
+          {% for a in areas %}
+            {% set ns.items = ns.items + (area_entities(a) | select('match', '^light\\.') | list) %}
+          {% endfor %}
+        {% endif %}
+        {% if light_list is defined and light_list is not none %}
+          {% set lights = [light_list] if light_list is string else light_list %}
+          {% for l in lights %}
+            {% if l is string and l.startswith('light.') %}
+              {% set ns.items = ns.items + [l] %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {{ ns.items | unique | list }}
+      only_if_on_safe: "{{ only_if_already_on | default(false) | bool }}"
+      dim_target_lights: >-
+        {% if only_if_on_safe | bool %}
+          {{ all_target_lights | select('is_state', 'on') | list }}
+        {% else %}
+          {{ all_target_lights }}
+        {% endif %}
+      color_temp_lights: >-
+        {% set ns = namespace(items=[]) %}
+        {% for e in dim_target_lights %}
+          {% set modes = state_attr(e, 'supported_color_modes') | default([], true) %}
+          {% if 'color_temp' in modes %}
+            {% set ns.items = ns.items + [e] %}
+          {% endif %}
+        {% endfor %}
+        {{ ns.items }}
+      kelvin_transition_safe: "{{ [0, kelvin_transition_seconds | int(0)] | max }}"
+      dim_transition_safe: "{{ [0, dim_transition_seconds | int(0)] | max }}"
+      end_pct_safe: >-
+        {% set p = end_brightness_pct | int(0) %}
+        {{ 0 if p < 0 else (100 if p > 100 else p) }}
+  - condition: template
+    value_template: "{{ dim_target_lights | count > 0 }}"
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ color_temp_lights | count > 0 }}"
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: "{{ color_temp_lights }}"
+        data:
+          color_temp_kelvin: "{{ color_temp_kelvin | int(2400) }}"
+          transition: "{{ kelvin_transition_safe | int }}"
+      - if: "{{ kelvin_transition_safe | int > 0 }}"
+        then:
+        - delay:
+            seconds: "{{ kelvin_transition_safe | int + 2 }}"
+  - variables:
+      dim_target_lights_now: >-
+        {% if only_if_on_safe | bool %}
+          {{ all_target_lights | select('is_state', 'on') | list }}
+        {% else %}
+          {{ dim_target_lights }}
+        {% endif %}
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ dim_target_lights_now | count > 0 }}"
+      sequence:
+      - repeat:
+          for_each: "{{ dim_target_lights_now }}"
+          sequence:
+          - variables:
+              target_pct: >-
+                {% set fallback = end_pct_safe | int %}
+                {% if per_light_end_brightness_pct is defined
+                      and per_light_end_brightness_pct is mapping
+                      and repeat.item in per_light_end_brightness_pct %}
+                  {% set p = per_light_end_brightness_pct[repeat.item] | int(fallback) %}
+                {% else %}
+                  {% set p = fallback %}
+                {% endif %}
+                {{ 0 if p < 0 else (100 if p > 100 else p) }}
+          - choose:
+            - conditions:
+              - condition: template
+                value_template: "{{ target_pct | int == 0 }}"
+              sequence:
+              - action: light.turn_off
+                target:
+                  entity_id: "{{ repeat.item }}"
+                data:
+                  transition: "{{ dim_transition_safe | int }}"
+            default:
+            - action: light.turn_on
+              target:
+                entity_id: "{{ repeat.item }}"
+              data:
+                brightness_pct: "{{ target_pct | int }}"
+                transition: "{{ dim_transition_safe | int }}"
+  mode: parallel
+# dim_lights_from_to_duration:
+#   alias: Lumiere | Diminuer luminosite de X% a Y% sur duree
+#   description: Dimming progressif d'une ou plusieurs lumieres. Si le pourcentage de fin est 0, eteint les lumieres a la fin.
+#   fields:
+#     light_target:
+#       description: Entite(s) lumiere cible(s) (entity_id), ex. light.chambre_amis ou liste.
+#       example: light.chambre_amis
+#       required: true
+#     start_pct:
+#       description: Pourcentage de debut (0-100).
+#       example: 100
+#       required: true
+#     end_pct:
+#       description: Pourcentage de fin (0-100). 0 signifie extinction.
+#       example: 10
+#       required: true
+#     duration_seconds:
+#       description: Duree totale de la transition en secondes.
+#       example: 180
+#       required: true
+#   sequence:
+#   - variables:
+#       from_pct: >-
+#         {% set s = start_pct | int(100) %}
+#         {% set e = end_pct | int(10) %}
+#         {% set s_clamped = 0 if s < 0 else (100 if s > 100 else s) %}
+#         {% set e_clamped = 0 if e < 0 else (100 if e > 100 else e) %}
+#         {{ [s_clamped, e_clamped] | max }}
+#       to_pct: >-
+#         {% set s = start_pct | int(100) %}
+#         {% set e = end_pct | int(10) %}
+#         {% set s_clamped = 0 if s < 0 else (100 if s > 100 else s) %}
+#         {% set e_clamped = 0 if e < 0 else (100 if e > 100 else e) %}
+#         {{ [s_clamped, e_clamped] | min }}
+#       duration_safe: >-
+#         {% set d = duration_seconds | int(1) %}
+#         {{ 1 if d < 1 else d }}
+#       steps: "{{ [1, (from_pct | int - to_pct | int)] | max }}"
+#       step_delay: "{{ [1, (duration_safe | int / steps | int)] | max }}"
+#       current_pct: "{{ from_pct | int }}"
+#   - action: light.turn_on
+#     target:
+#       entity_id: "{{ light_target }}"
+#     data:
+#       brightness_pct: "{{ from_pct | int }}"
+#       transition: 1
+#   - repeat:
+#       while:
+#       - condition: template
+#         value_template: "{{ current_pct | int > to_pct | int }}"
+#       sequence:
+#       - variables:
+#           next_pct: "{{ [to_pct | int, current_pct | int - 1] | max }}"
+#       - choose:
+#         - conditions:
+#           - condition: template
+#             value_template: "{{ next_pct | int == 0 }}"
+#           sequence:
+#           - action: light.turn_off
+#             target:
+#               entity_id: "{{ light_target }}"
+#             data:
+#               transition: 1
+#         default:
+#         - action: light.turn_on
+#           target:
+#             entity_id: "{{ light_target }}"
+#           data:
+#             brightness_pct: "{{ next_pct | int }}"
+#             transition: 1
+#       - variables:
+#           current_pct: "{{ next_pct | int }}"
+#       - if: "{{ current_pct | int > to_pct | int }}"
+#         then:
+#         - delay:
+#             seconds: "{{ step_delay | int }}"
+#   mode: restart
+set_home_mode_off:
+  alias: Set Home Mode Off
+  description: Desactive le mode maison
+  sequence:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.home_mode
+# reload_yaml_configuration:
+#   alias: Reload YAML Configuration
+#   description: Recharge la configuration sans redemarrage complet
+#   sequence:
+#   - action: homeassistant.reload_core_config
+#   - action: automation.reload
+#   - action: script.reload
+lock_porte_securise:
+  alias: "Verrouillage Sécurisé Porte Entrée"
+  description: "Tente de verrouiller si la serrure est debarree, meme si le capteur porte est indisponible ou bloque"
+  sequence:
+    - condition: state
+      entity_id: lock.porte
+      state: "unlocked"
+    - action: lock.lock
+      target:
+        entity_id: lock.porte
+  mode: single
+flash_poulailler_30s:
+  alias: Flash Lumière Poulailler 30s
+  description: Clignote la lumière du Poulailler pendant 30 secondes (1s ON / 1s OFF). S'exécute uniquement le jour.
+  sequence:
+    - condition: sun
+      after: sunrise
+      before: sunset
+    - repeat:
+        count: 15
+        sequence:
+          - action: light.turn_on
+            target:
+              entity_id: light.poulailler
+          - delay: '00:00:01'
+          - action: light.turn_off
+            target:
+              entity_id: light.poulailler
+          - delay: '00:00:01'
+  mode: single
+toggle_poules:
+  alias: Toggle Lumière Poulailler
+  description: Allume avec le scénario Concentration 100% ou éteint la lumière du Poulailler
+  sequence:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: light.poulailler
+              state: "on"
+          sequence:
+            - action: light.turn_off
+              target:
+                entity_id: light.poulailler
+      default:
+        - condition: sun
+          after: sunrise
+          before: sunset
+        - action: scene.turn_on
+          target:
+            entity_id: scene.poulailler_concentration
+  mode: single
+turn_off_all_lights_except_adresse:
+  alias: Lumiere | Eteindre toutes les lumieres sauf Adresse
+  description: Eteint toutes les lumieres allumees sauf celles de la zone Adresse.
+  sequence:
+  - variables:
+      lights_to_turn_off: >-
+        {{
+          states.light
+          | selectattr('state', 'eq', 'on')
+          | map(attribute='entity_id')
+          | reject('in', area_entities('adresse'))
+          | list
+        }}
+  - condition: template
+    value_template: "{{ lights_to_turn_off | count > 0 }}"
+  - action: light.turn_off
+    target:
+      entity_id: "{{ lights_to_turn_off }}"
+  mode: single
+lights_off_sauf_chambre:
+  alias: Lumiere | Eteindre tout sauf chambre
+  description: Eteint toutes les lumieres allumees sauf celles de la chambre des maitres.
+  sequence:
+  - variables:
+      lights_to_turn_off: >-
+        {{
+          states.light
+          | selectattr('state', 'eq', 'on')
+          | map(attribute='entity_id')
+          | reject('in', area_entities('chambre') + area_entities('adresse'))
+          | list
+        }}
+  - condition: template
+    value_template: "{{ lights_to_turn_off | count > 0 }}"
+  - action: light.turn_off
+    target:
+      entity_id: "{{ lights_to_turn_off }}"
+  mode: single
+night_shutdown_except_adresse:
+  alias: Nuit | Extinction sauf Adresse
+  description: Verrouille la porte, eteint toutes les lumieres sauf Adresse et coupe la TV si necessaire.
+  sequence:
+  - action: script.lock_porte_securise
+  - action: script.turn_off_all_lights_except_adresse
+  - action: media_player.turn_off
+    target:
+      entity_id: media_player.tele_qn50ls03aafxzc
+  mode: single
+verifier_et_actionner_store:
+  alias: "Test | Vérification dynamique store avec répétition"
+  mode: parallel
+  fields:
+    store_entity:
+      description: "L'entité du store (ex: cover.chambre_ami)"
+    sensor_entity:
+      description: "Le capteur (ex: binary_sensor.capteur_store_chambre_amie)"
+    action_type:
+      description: "close ou open"
+    delay_seconds:
+      description: "Délai entre chaque tentative"
+    nombre_essais:
+      description: "Nombre maximum de tentatives avant notification"
+      example: 3
+
+  sequence:
+    # === Première série d'essais ===
+    - repeat:
+        count: "{{ nombre_essais | int }}"
+        sequence:
+          # 1. Envoyer la commande
+          - action: "cover.{{ action_type }}_cover"
+            target:
+              entity_id: "{{ store_entity }}"
+
+          # 2. Attendre le délai
+          - delay:
+              seconds: "{{ delay_seconds | int }}"
+
+          # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
+          - if:
+              - condition: template
+                value_template: "{{ is_state(sensor_entity, 'unavailable') }}"
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ⚠️ Capteur non disponible —
+                      {{ state_attr(sensor_entity, 'friendly_name') | default(sensor_entity) }} ({{ sensor_entity }})
+                      Impossible de vérifier l'état du store {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }}).
+                    status: "capteur_indisponible"
+              - stop: "Capteur non disponible"
+                response_variable: script_response
+          - if:
+              - condition: template
+                value_template: >
+                  {% if action_type == 'close' %}
+                    {{ is_state(sensor_entity, 'off') }}
+                  {% else %}
+                    {{ is_state(sensor_entity, 'on') }}
+                  {% endif %}
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès —
+                      {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+                      après {{ repeat.index }} tentative(s).
+                    status: "succes"
+              - stop: "Succès"
+                response_variable: script_response
+
+    # === Deuxième série d'essais (capteur disponible, 1re série échouée) ===
+    - repeat:
+        count: "{{ nombre_essais | int }}"
+        sequence:
+          # 1. Envoyer la commande
+          - action: "cover.{{ action_type }}_cover"
+            target:
+              entity_id: "{{ store_entity }}"
+
+          # 2. Attendre le délai
+          - delay:
+              seconds: "{{ delay_seconds | int }}"
+
+          # 3. Vérifier si c'est réussi pour arrêter la boucle plus tôt
+          - if:
+              - condition: template
+                value_template: "{{ is_state(sensor_entity, 'unavailable') }}"
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ⚠️ Capteur non disponible —
+                      {{ state_attr(sensor_entity, 'friendly_name') | default(sensor_entity) }} ({{ sensor_entity }})
+                      Impossible de vérifier l'état du store {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }}).
+                    status: "capteur_indisponible"
+              - stop: "Capteur non disponible"
+                response_variable: script_response
+          - if:
+              - condition: template
+                value_template: >
+                  {% if action_type == 'close' %}
+                    {{ is_state(sensor_entity, 'off') }}
+                  {% else %}
+                    {{ is_state(sensor_entity, 'on') }}
+                  {% endif %}
+            then:
+              - variables:
+                  script_response:
+                    message: >-
+                      ✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès (2e série) —
+                      {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+                      après {{ repeat.index }} tentative(s) supplémentaire(s).
+                    status: "succes"
+              - stop: "Succès 2e série"
+                response_variable: script_response
+
+    # === Nudge à 15% (store bloqué après deux séries d'essais) ===
+    - action: cover.set_cover_position
+      target:
+        entity_id: "{{ store_entity }}"
+      data:
+        position: 15
+
+    - delay:
+        seconds: "{{ delay_seconds | int }}"
+
+    # === Dernière tentative après nudge ===
+    - action: "cover.{{ action_type }}_cover"
+      target:
+        entity_id: "{{ store_entity }}"
+
+    - delay:
+        seconds: "{{ delay_seconds | int }}"
+
+    - if:
+        - condition: template
+          value_template: "{{ is_state(sensor_entity, 'unavailable') }}"
+      then:
+        - variables:
+            script_response:
+              message: >-
+                ⚠️ Capteur non disponible —
+                {{ state_attr(sensor_entity, 'friendly_name') | default(sensor_entity) }} ({{ sensor_entity }})
+                Impossible de vérifier l'état du store {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }}).
+              status: "capteur_indisponible"
+        - stop: "Capteur non disponible"
+          response_variable: script_response
+    - if:
+        - condition: template
+          value_template: >
+            {% if action_type == 'close' %}
+              {{ is_state(sensor_entity, 'off') }}
+            {% else %}
+              {{ is_state(sensor_entity, 'on') }}
+            {% endif %}
+      then:
+        - variables:
+            script_response:
+              message: >-
+                ✅ Store {{ 'fermé' if action_type == 'close' else 'ouvert' }} avec succès après nudge à 15% —
+                {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }}).
+              status: "succes"
+        - stop: "Succès après nudge"
+          response_variable: script_response
+
+    # === Échec final après deux séries + nudge + dernière tentative ===
+    - variables:
+        script_response:
+          message: >-
+            ⚠️ Échec critique Store —
+            {{ state_attr(store_entity, 'friendly_name') }} ({{ store_entity }})
+            est toujours {{ states(sensor_entity) }} après {{ nombre_essais }} tentative(s) × 2 séries
+            et 1 dernière tentative après nudge à 15%.
+            Action demandée : {{ action_type }}.
+          status: "echec"
+    - stop: "Échec"
+      response_variable: script_response
+# ============================================================
+# [ENVELOPPES - TRANSITION KELVIN PUIS DIM]
+# ============================================================
+dim_rezchausse_mode_tv:
+  alias: Lumiere | Rez-de-chaussee | Dim pour mode TV salon
+  description: Enveloppe de transition_lights_kelvin_then_dim_to_pct pour le mode TV salon (foyer, salle a manger, cuisine + salon 1/4, 2400K, extinction si allumees; salon 2/3 toujours allumes a 30%).
+  sequence:
+  # Foyer, salle a manger, cuisine + salon 1/4 : seulement si deja allumees
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - foyer
+        - salle_a_manger
+        - cuisine
+      light_list:
+        - light.salon_1
+        - light.salon_4
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 0
+      dim_transition_seconds: 20
+      only_if_already_on: true
+  # Salon 2 et 3 : toujours allumes a 30%, meme si eteints
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      light_list:
+        - light.salon_2
+        - light.salon_3
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 30
+      dim_transition_seconds: 20
+      only_if_already_on: false
+  mode: restart
+
+dim_progressif_rezchausse_soir:
+  alias: Lumiere | Rez-de-chaussee | Dim progressif soir
+  description: Enveloppe de transition_lights_kelvin_then_dim_to_pct pour le passage progressif soir (salon, foyer, salle a manger, cuisine, 2400K, 30%, 30 min kelvin + 60 min dim).
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - salon
+        - foyer
+        - salle_a_manger
+        - cuisine
+      color_temp_kelvin: 2400
+      kelvin_transition_seconds: 1800
+      end_brightness_pct: 30
+      only_if_already_on: true
+      dim_transition_seconds: 3600
+  mode: restart
+
+dim_chambre_ami_stimulation_test_1:
+  alias: ZZ Test | Lumiere | Chambre ami | Dim stimulation extinction
+  description: Enveloppe de test - transition_lights_kelvin_then_dim_to_pct pour chambre_amis avec kelvin_stimulation, extinction complete.
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - chambre_amis
+      color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
+      kelvin_transition_seconds: 30
+      end_brightness_pct: 0
+      only_if_already_on: true
+      dim_transition_seconds: 60
+  mode: restart
+
+dim_chambre_ami_stimulation_test_2:
+  alias: ZZ Test | Lumiere | Chambre ami | Dim stimulation 30%
+  description: Enveloppe de test - transition_lights_kelvin_then_dim_to_pct pour chambre_amis avec kelvin_stimulation, dim a 30%.
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - chambre_amis
+      color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') }}"
+      kelvin_transition_seconds: 60
+      end_brightness_pct: 30
+      only_if_already_on: true
+      dim_transition_seconds: 120
+  mode: restart
+
+dim_rezchausse_soir_test:
+  alias: ZZ Test | Lumiere | Rez-de-chaussee | Dim soir (mode TV)
+  description: Enveloppe de test - transition_lights_kelvin_then_dim_to_pct pour foyer, salle a manger, cuisine + salon 1-4 avec kelvin_detente, salon 2/3 a 30%.
+  sequence:
+  - action: script.transition_lights_kelvin_then_dim_to_pct
+    data:
+      area_list:
+        - foyer
+        - salle_a_manger
+        - cuisine
+      light_list:
+        - light.salon_1
+        - light.salon_2
+        - light.salon_3
+        - light.salon_4
+      color_temp_kelvin: "{{ states('sensor.kelvin_detente') | int(2250) }}"
+      kelvin_transition_seconds: 10
+      end_brightness_pct: 0
+      per_light_end_brightness_pct:
+        light.salon_2: 30
+        light.salon_3: 30
+      dim_transition_seconds: 20
+  mode: restart
+
+# ============================================================
+# [NOTIFICATION BATTERIE CAPTEURS STORES]
+# ============================================================
+notifier_batterie_capteur_store:
+  alias: "Store | 🔋 | Notifier batterie capteur sur Pixel 9a"
+  description: "Vérifie la disponibilité d'un capteur de store, récupère le pourcentage de batterie et envoie une notification sur le Pixel 9a."
+  fields:
+    sensor_entity:
+      description: "Entity ID du capteur binaire de store (ex: binary_sensor.capteur_store_chambre_amie)"
+      example: binary_sensor.capteur_store_chambre_amie
+      required: true
+  sequence:
+  - condition: template
+    value_template: "{{ states(sensor_entity) != 'unavailable' }}"
+  - variables:
+      battery_entity: >-
+        {% set base = sensor_entity | replace('binary_sensor.', 'sensor.') %}
+        {% if base.endswith('_inverse') %}{{ base[:-8] }}_batterie{% else %}{{ base }}_batterie{% endif %}
+      capteur_nom: "{{ state_attr(sensor_entity, 'friendly_name') | default(sensor_entity) }}"
+      capteur_etat: "{{ 'Ouvert' if is_state(sensor_entity, 'on') else 'Fermé' }}"
+      batterie_pct: "{{ states(battery_entity) }}"
+  - action: notify.mobile_app_lucdelac
+    data:
+      title: "🔋 Batterie capteur store"
+      message: >-
+        {{ capteur_nom }}
+        État : {{ capteur_etat }}
+        Batterie : {{ batterie_pct }} %
+  mode: parallel
+

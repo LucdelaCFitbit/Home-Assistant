@@ -1,0 +1,43 @@
+input_boolean:
+  home_mode:
+    name: Home Mode
+    icon: mdi:home-account
+  cheveur:
+    name: Cheveur
+    icon: mdi:lightbulb-auto
+  guest_mode:
+    name: Guest Mode
+    icon: mdi:account-group
+  andre_mode:
+    name: Andre Mode
+    icon: mdi:account
+  vacances:
+    name: Vacances
+    icon: mdi:beach
+  luc_absent:
+    name: Luc Absent
+    icon: mdi:account-arrow-right
+  reboot_ha_3h:
+    name: Reboot HA 03h
+    icon: mdi:restart-alert
+
+input_select:
+  house_profile:
+    name: House Profile
+    options:
+      - normal
+      - quiet
+      - away
+    initial: normal
+    icon: mdi:tune-variant
+
+timer:
+  focus_session:
+    name: Focus Session
+    duration: "00:25:00"
+
+input_datetime:
+  porte_compte_rebours_depart:
+    name: Porte | Depart compte rebours serrure
+    has_date: true
+    has_time: true

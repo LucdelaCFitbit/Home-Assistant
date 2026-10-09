@@ -15,3 +15,20 @@ log/
 # Python cache
 __pycache__/
 *.pyc
+
+# Root-level runtime files and secrets
+.storage/
+.cache/
+.cloud/
+secrets.yaml
+.ha_run.lock
+.HA_VERSION
+.shopping_list.json
+zigbee.db*
+home-assistant.log*
+tts/
+deps/
+config/.ha_run.lock
+config/.HA_VERSION
+config/.shopping_list.json
+config/deps/

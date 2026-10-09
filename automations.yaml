@@ -1,0 +1,1383 @@
+# ============================================================
+# AUTOMATIONS HOME ASSISTANT
+# ============================================================
+# Convention:
+# - Chaque bloc correspond a un usage (protection, fermeture, ouverture)
+# - Les IDs restent stables pour ne pas casser les references HA
+# - Les conditions andre_mode protegent uniquement les stores salon/salle a manger
+# - guest_mode affecte les lumieres seulement, pas les stores
+# ============================================================
+# [SECTION AVEC ANDRE_MODE ACTIF, ON NE FERME PAS LES STORES SALON/SALLE A MANGER]
+# DEBUT SECTION
+# ============================================================
+# ============================================================
+# [FERMETURE EN FIN DE JOURNEE]
+# ============================================================
+# Au coucher du soleil, ferme salon + salle a manger, puis répète après 1 et 2 minutes
+# uniquement si andre_mode est OFF (guest_mode n'affecte pas les stores).
+- id: 'sunset_close_salon_dining_covers'
+  alias: Store | 🌅 | Fermer stores salon et salle a manger
+  description: Ferme les stores salon et salle à manger au coucher du soleil via le script de vérification, sauf si andre_mode est actif.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-00:45:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.andre_mode
+    state: 'off'
+  actions:
+  - parallel:
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.porte_patio
+        sensor_entity: binary_sensor.capteur_store_salle_a_manger_inverse
+        action_type: "close"
+        delay_seconds: 30
+        nombre_essais: 3
+      response_variable: retour_patio
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.salon
+        sensor_entity: binary_sensor.capteur_store_salon_inverse
+        action_type: "close"
+        delay_seconds: 30
+        nombre_essais: 3
+      response_variable: retour_salon
+  - action: notify.toutes_les_alertes
+    data:
+      title: >-
+        {% set succes = [retour_patio.status, retour_salon.status] | select('equalto', 'succes') | list | count %}
+        {% if succes == 2 %}
+          ✅ Les 2 stores fermés avec succès
+        {% elif succes == 1 %}
+          ⚠️ Fermeture partielle des stores (1/2)
+        {% else %}
+          ❌ Échec fermeture des 2 stores
+        {% endif %}
+      message: >-
+        Salle à manger : {{ retour_patio.message }}
+        Salon : {{ retour_salon.message }}
+  mode: single
+
+# ============================================================
+# [FERMETURE BUREAU LUC ET CHAMBRE AMI AU COUCHER DU SOLEIL AVEC REPETITIONS]
+# ============================================================
+- id: 'sunset_close_bureau_luc_chambre_ami_with_repeats'
+  alias: "Store | 🌅 | Bureau Luc et Chambre Ami | Fermer au coucher du soleil"
+  description: "Ferme le store et vérifie via le script après 30s"
+  trigger:
+    - platform: sun
+      event: sunset
+  condition: []
+  action:
+    - parallel:
+      - action: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.chambre_amis
+          sensor_entity: binary_sensor.capteur_store_chambre_amie
+          action_type: "close"
+          delay_seconds: 30
+          nombre_essais: 3
+        response_variable: retour_chambre
+      - action: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.bureau
+          sensor_entity: binary_sensor.capteur_store_bureau_luc
+          action_type: "close"
+          delay_seconds: 30
+          nombre_essais: 3
+        response_variable: retour_bureau
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' and retour_bureau.status == 'succes' %}
+            ✅ Les 2 stores fermés avec succès
+          {% elif retour_chambre.status == 'succes' or retour_bureau.status == 'succes' %}
+            ⚠️ Fermeture partielle des stores
+          {% else %}
+            ❌ Échec fermeture des 2 stores
+          {% endif %}
+        message: >-
+          Chambre ami : {{ retour_chambre.message }}
+          Bureau : {{ retour_bureau.message }}
+  mode: single
+
+# ============================================================
+# [OUVERTURE SAISONNIERE DES STORES]
+# ============================================================
+# Hiver (nov-fev): ouverture au lever du soleil avec répétitions après 1 et 2 minutes.
+# Hors hiver: ouverture à 07:00 avec répétitions après 30 secondes.
+# Cibles: bureau, chambre ami, salle a manger (porte_patio), salon.
+- id: 'open_covers_winter_sun_else_7am'
+  alias: "Store | ☀️ | Bureau Luc, Chambre Ami, Salle à Manger et Salon | Ouvrir au lever du soleil"
+  description: "Ouvre bureau, chambre ami et salle à manger en parallèle au lever du soleil, puis le salon 15 min plus tard. Vérifie via le script après 30s."
+  triggers:
+    - trigger: sun
+      event: sunrise
+      id: sunrise
+    - trigger: time
+      at: '07:00:00'
+      id: time_0
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: sunrise
+      - condition: template
+        value_template: "{{ now().month in [11, 12, 1, 2] }}"
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: time_0
+      - condition: template
+        value_template: "{{ now().month not in [11, 12, 1, 2] }}"
+  action:
+    - parallel:
+      - action: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.chambre_amis
+          sensor_entity: binary_sensor.capteur_store_chambre_amie
+          action_type: "open"
+          delay_seconds: 30
+          nombre_essais: 4
+        response_variable: retour_chambre
+      - action: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.bureau
+          sensor_entity: binary_sensor.capteur_store_bureau_luc
+          action_type: "open"
+          delay_seconds: 30
+          nombre_essais: 4
+        response_variable: retour_bureau
+      - action: script.verifier_et_actionner_store
+        data:
+          store_entity: cover.porte_patio
+          sensor_entity: binary_sensor.capteur_store_salle_a_manger_inverse
+          action_type: "open"
+          delay_seconds: 30
+          nombre_essais: 3
+        response_variable: retour_patio
+    - delay: '00:15:00'
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.salon
+        sensor_entity: binary_sensor.capteur_store_salon_inverse
+        action_type: "open"
+        delay_seconds: 30
+        nombre_essais: 3
+      response_variable: retour_salon
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% set succes = [retour_chambre.status, retour_bureau.status, retour_patio.status, retour_salon.status] | select('equalto', 'succes') | list | count %}
+          {% if succes == 4 %}
+            ✅ Les 4 stores ouverts avec succès
+          {% elif succes > 0 %}
+            ⚠️ Ouverture partielle des stores ({{ succes }}/4)
+          {% else %}
+            ❌ Échec ouverture des 4 stores
+          {% endif %}
+        message: >-
+          Chambre ami : {{ retour_chambre.message }}
+          Bureau : {{ retour_bureau.message }}
+          Salle à manger : {{ retour_patio.message }}
+          Salon : {{ retour_salon.message }}
+  mode: single
+
+# ============================================================
+# [FERMETURE CHAMBRE MAITRE AVANT SOLEIL]
+# ============================================================
+# Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil.
+# Cette automatisation est independante de andre_mode.
+- id: 'close_master_bedroom_cover_45min_before_sunset'
+  alias: Store | 🌅 | Fermer store chambre maitre 45 min avant coucher
+  description: Ferme le store de la chambre maitre 45 minutes avant le coucher du soleil via le script de vérification.
+  triggers:
+    - trigger: sun
+      event: sunset
+      offset: '-00:45:00'
+  conditions: []
+  actions:
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.chambre_maitre
+        sensor_entity: binary_sensor.capteur_store_chambre_maitre
+        action_type: "close"
+        delay_seconds: 60
+        nombre_essais: 3
+      response_variable: retour_chambre
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' %}✅ Chambre maître fermée avec succès{% else %}⚠️ Échec fermeture chambre maître{% endif %}
+        message: "{{ retour_chambre.message }}"
+  mode: single
+# ============================================================
+# [OUVERTURE CHAMBRE MAITRE AVANT SOLEIL]
+# ============================================================
+# Ouvre le store de la chambre maitre à 8h00 du matin.
+# Cette automatisation est independante de andre_mode.
+- id: 'open_master_bedroom_cover_0800'
+  alias: Store | ☀️ | Chambre Maître | Ouvrir store à 08h00
+  description: Ouvre le store de la chambre maître à 8h00 du matin via le script de vérification.
+  triggers:
+    - trigger: time
+      at: '08:00:00'
+  conditions: []
+  actions:
+    - action: script.verifier_et_actionner_store
+      data:
+        store_entity: cover.chambre_maitre
+        sensor_entity: binary_sensor.capteur_store_chambre_maitre
+        action_type: "open"
+        delay_seconds: 10
+        nombre_essais: 3
+      response_variable: retour_chambre
+    - action: notify.toutes_les_alertes
+      data:
+        title: >-
+          {% if retour_chambre.status == 'succes' %}✅ Chambre maître ouverte avec succès{% else %}⚠️ Échec ouverture chambre maître{% endif %}
+        message: "{{ retour_chambre.message }}"
+  mode: single
+
+# ============================================================
+# [BUREAU LUC - FERMETURE SI ENSOLEILLE]
+# ============================================================
+# Jours de semaine a 13:30, si la meteo est "sunny",
+# le store du bureau Luc se ferme a 75%.
+# Entite meteo detectee: weather.forecast_maison
+- id: 'bureau_luc_weekday_1330_if_sunny_close_75'
+  alias: Store | Bureau Luc | 13:30 semaine si soleil fermer a 75% (4 fois)
+  description: En semaine a 13:30, ferme le store bureau a 75% si meteo ensoleillee et répète 4 fois.
+  triggers:
+    - trigger: time
+      at: '13:15:00'
+  conditions:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+    - condition: state
+      entity_id: weather.forecast_maison
+      state: sunny
+  actions:
+    - repeat:
+        count: 4
+        sequence:
+          - action: cover.set_cover_position
+            target:
+              entity_id: cover.bureau
+            data:
+              position: 75
+          - delay: '00:00:15' # Attend 15 secondes avant la prochaine répétition
+  mode: single
+
+
+# ============================================================
+# [SERRURE ENTREE - REBARRER AUTO]
+# ============================================================
+# Si la serrure d'entree est debarree, un delai de 15 minutes demarre.
+# Chaque ouverture de la porte reinitialise ce delai.
+# A la fin du delai, la serrure est rebarree si les conditions sont reunies.
+- id: 'entry_lock_auto_relock_after_15min'
+  alias: "Serrure | Entree | Rebarre serrure apres 15 min debarree"
+  trigger:
+    - trigger: state
+      entity_id: lock.porte
+      to: 'unlocked'
+    - trigger: state
+      entity_id: binary_sensor.porte_porte
+      to: 'on'
+  action:
+    - condition: state
+      entity_id: lock.porte
+      state: 'unlocked'
+    - action: input_datetime.set_datetime
+      target:
+        entity_id: input_datetime.porte_compte_rebours_depart
+      data:
+        datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+    - delay: '00:15:00'
+    - repeat:
+        while:
+          - condition: state
+            entity_id: binary_sensor.porte_porte
+            state: 'on'
+          - condition: state
+            entity_id: lock.porte
+            state: 'unlocked'
+        sequence:
+          - action: input_datetime.set_datetime
+            target:
+              entity_id: input_datetime.porte_compte_rebours_depart
+            data:
+              datetime: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+          - delay: '00:15:00'
+    - if:
+        - condition: state
+          entity_id: lock.porte
+          state: 'unlocked'
+      then:
+        - action: script.lock_porte_securise
+  mode: restart
+
+# ============================================================
+# [TV SAMSUNG - WAKE-ON-LAN EXPLICITE]
+# NE PAS SUPPRIMER MEME SI L'INTEGRATION SAMSUNG TV A UN WAKE-ON-LAN IMPLICITE DEPRECIÉ, CAR CELUI-CI NE FONCTIONNE PAS FIABLEMENT.
+# ============================================================
+# Remplace le Wake-On-LAN implicite deprecie de l'integration Samsung TV.
+# Quand la TV est demandee en allumage, on envoie explicitement un magic packet.
+- id: 'samsung_tv_explicit_wol_turn_on'
+  alias: TV | Samsung | Wake-on-LAN explicite
+  description: Envoie un magic packet WOL quand la TV Samsung du salon est demandee en allumage.
+  triggers:
+    - trigger: samsungtv.turn_on
+      entity_id: media_player.tele_qn50ls03aafxzc
+  conditions: []
+  actions:
+    - action: wake_on_lan.send_magic_packet
+      data:
+        mac: '64:07:f6:42:75:e4'
+  mode: single
+
+# ============================================================
+# [MODE TV SALON]
+# ============================================================
+# Quand Google TV (salon) s'allume apres 19:30, on desactive le capteur motion
+# de l'entree, on eteint entree/salle a manger/foyer, on tamise le salon plafond
+# et on lance la scene Rest pour la cuisine.
+# Quand la TV s'eteint apres 21:00, on reactive le motion d'entree
+# et on ferme les lumieres de la zone salon.
+
+- id: 'living_room_google_tv_mode'
+  alias: TV | Salon | Mode TV Google
+  description: Actions au demarrage et a l'arret de la TV du salon avec capteur de seuil.
+  triggers:
+    - trigger: state
+      entity_id: remote.tv
+      from: 'off'
+      to: 'on'
+      id: tv_on
+    - trigger: state
+      entity_id: remote.tv
+      to: 'off'
+      id: tv_off
+  conditions: []
+  actions:
+    - choose:
+      - conditions:
+          - condition: trigger
+            id: tv_on
+          - condition: time
+            after: '18:30:00'
+            before: '20:55:00'
+          - condition: state
+            entity_id: input_boolean.andre_mode
+            state: 'off'
+          - condition: state
+            entity_id: input_boolean.guest_mode
+            state: 'off'
+        sequence:
+          - action: script.turn_off
+            target:
+              entity_id: script.dim_progressif_rezchausse_soir
+          - action: script.dim_rezchausse_mode_tv
+          - action: switch.turn_off
+            target:
+              entity_id: switch.motion_entre_capteur_de_mouvement
+          - action: tts.speak
+            target:
+              entity_id: tts.google_translate_fr_ca
+            data:
+              media_player_entity_id: media_player.mini
+              message: 'Bonne soirée télé'
+      - conditions:
+          - condition: trigger
+            id: tv_off
+          - condition: time
+            after: '21:00:00'
+            before: '23:55:00'
+        sequence:
+          - action: switch.turn_on
+            target:
+              entity_id: switch.motion_entre_capteur_de_mouvement
+          - action: light.turn_off
+            target:
+              area_id: salon
+          - delay: '00:01:00'
+          - action: media_player.turn_off
+            target:
+              entity_id: media_player.tele_qn50ls03aafxzc
+  mode: restart
+
+# ============================================================
+# [MODES - RETOUR AUTO A OFF APRES 12H]
+# ============================================================
+# Quand Andre ou Invite passe a ON, le mode revient a OFF apres 12h
+# s'il est encore actif a ce moment.
+- id: 'modes_andre_invite_auto_off_after_12h'
+  alias: Modes | Andre/Invite | Auto OFF apres 12h
+  description: Remet Andre et Invite a OFF 12h apres activation si encore ON.
+  triggers:
+  - trigger: state
+    entity_id:
+    - input_boolean.andre_mode
+    - input_boolean.guest_mode
+    to: 'on'
+  conditions: []
+  actions:
+  - delay: '12:00:00'
+  - if:
+    - condition: template
+      value_template: "{{ is_state(trigger.entity_id, 'on') }}"
+    then:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: "{{ trigger.entity_id }}"
+  mode: parallel
+  max: 10
+
+# ============================================================
+# [REZ DE CHAUSSEE - ATTENUATION PROGRESSIVE 19H]
+# ============================================================
+# A 19:00, les lumieres du REZ DE CHAUSSEE passent progressivement
+# en mode attenue sur 30 minutes si andre_mode OU guest_mode est OFF.
+- id: 'rezchausse_progressive_dim_if_mode_off'
+  alias: Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  description: De novembre a avril, attenue a 19:30. De mai a octobre, attenue 1h apres le coucher du soleil, si andre_mode ou guest_mode est OFF.
+  triggers:
+  - trigger: time
+    at: '19:30:00'
+    id: nov_apr_1930
+  - trigger: sun
+    event: sunset
+    offset: '01:00:00'
+    id: may_oct_sunset_plus_1h
+  conditions:
+  - condition: or
+    conditions:
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: nov_apr_1930
+      - condition: template
+        value_template: "{{ now().month in [11, 12, 1, 2, 3, 4] }}"
+    - condition: and
+      conditions:
+      - condition: trigger
+        id: may_oct_sunset_plus_1h
+      - condition: template
+        value_template: "{{ now().month in [5, 6, 7, 8, 9, 10] }}"
+  - condition: state
+    entity_id: remote.tv
+    state: 'off'
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      sequence:
+      - action: script.dim_progressif_rezchausse_soir
+  mode: single
+
+# ============================================================
+# [LUMIERE - ON SALON, FOYER, SALLE A MANGER ET CUISINE]
+# ============================================================
+# Allume les lumieres 90 minutes avant le coucher du soleil
+# en utilisant le scenario concentration a 100%.
+- id: 'lights_on_salon_foyer_dining_kitchen_90min_before_sunset'
+  alias: Lumiere | ON Salon, Foyer, Salle a manger et cuisine
+  description: Active le scenario concentration a 100% 90 minutes avant le coucher du soleil.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-01:30:00'
+  conditions:
+  - condition: state
+    entity_id: remote.tv
+    state: 'off'
+  actions:
+  - action: scene.turn_on
+    target:
+      entity_id:
+      - scene.salon_concentration
+      - scene.foyer_concentration
+      - scene.salle_a_manger_concentration
+      - scene.cuisine_concentration
+  - action: light.turn_on
+    target:
+      area_id:
+      - salon
+      - foyer
+      - salle_a_manger
+      - cuisine
+    data:
+      brightness_pct: 100
+  mode: single
+
+# ============================================================
+# [POULAILLER - ON/OFF AVANT SOLEIL ET EXTINCTION PROGRESSIVE AU COUCHER]
+# ============================================================
+# Allume la lumiere du poulailler 30 minutes avant le coucher du soleil
+# avec le scenario concentration, puis lance une extinction progressive
+# de 30 minutes au coucher du soleil.
+- id: 'poulailler_light_on_off_minus30_and_progressive_off_at_sunset'
+  alias: Lumiere | ON/OFF Poulailler
+  description: Allume la lumiere du poulailler a -30 min du coucher du soleil, puis extinction progressive de 30 min au coucher du soleil.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-00:30:00'
+    id: on_minus_30
+  - trigger: sun
+    event: sunset
+    id: off_at_sunset
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_minus_30
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.poulailler_lumineux
+    - conditions:
+      - condition: trigger
+        id: off_at_sunset
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.poulailler
+        data:
+          transition: 1800
+  mode: single
+
+# ============================================================
+# [VOLIERE - SCENE NATURELLE AU LEVER ET EXTINCTION PROGRESSIVE AVANT COUCHER]
+# ============================================================
+# Au lever du soleil, active la scene "Voliere Lumiere naturelle".
+# 60 minutes avant le coucher du soleil, eteint progressivement sur 20 minutes.
+- id: 'voliere_light_natural_on_sunrise_off_minus60_progressive'
+  alias: Lumiere | Soleil ON/OFF Voliere
+  description: Active la scene voliere lumiere naturelle au lever du soleil, puis eteint la lumiere 60 minutes avant le coucher du soleil avec transition de 20 minutes.
+  triggers:
+  - trigger: sun
+    event: sunrise
+    id: on_sunrise
+  - trigger: sun
+    event: sunset
+    offset: '-01:00:00'
+    id: off_minus_60
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_sunrise
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.voliere_lumiere_naturelle
+    - conditions:
+      - condition: trigger
+        id: off_minus_60
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.voliere
+        data:
+          transition: 1200
+  mode: single
+
+# ============================================================
+# [BUREAU LUC - ON/OFF SEMAINE HORS VACANCES]
+# ============================================================
+# Du lundi au vendredi, hors vacances:
+# - 06:30: active le scenario concentration
+# - 17:00: eteint la lumiere progressivement sur 30 minutes
+- id: 'bureau_luc_weekday_on_off_hors_vacances'
+  alias: Lumiere | ON/OFF Bureau Luc
+  description: Du lundi au vendredi hors vacances, allume Bureau Luc a 06:30 (scenario concentration) puis extinction progressive a 17:00 sur 30 minutes.
+  triggers:
+  - trigger: time
+    at: '06:30:00'
+    id: on_0630
+  - trigger: time
+    at: '17:00:00'
+    id: off_1700
+  conditions:
+  - condition: state
+    entity_id: input_boolean.vacances
+    state: 'off'
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_0630
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.bureau_luc_concentration
+    - conditions:
+      - condition: trigger
+        id: off_1700
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.bureau_luc
+        data:
+          transition: 1800
+  mode: single
+
+# ============================================================
+# [FIN DE SEMAINE ET FERIES - LUMIERES SI PLUIE] Progression vers scenario stimulation a 50%
+# ============================================================
+# En fin de semaine ou jour ferie (via Workday), si la meteo est pluvieuse,
+# allume salon + foyer a 50% avec la temperature de couleur Stimulation.
+- id: 'weekend_rainy_turn_on_salon_foyer_stimulation'
+  alias: Lumiere | Weekend/Ferie pluie | ON salon et foyer stimulation 50%
+  description: En fin de semaine ou jour ferie, allume salon et foyer si la meteo est rainy.
+  triggers:
+  - trigger: state
+    entity_id: weather.forecast_maison
+    to: rainy
+    id: rainy_state
+  - trigger: time
+    at: '08:30:00'
+    id: day_type_check
+  conditions:
+  - condition: time
+    weekday:
+    - sat
+    - sun
+  - condition: time
+    after: '08:00:00'
+    before: '12:00:00'
+  - condition: template
+    value_template: >-
+      {{ now().weekday() in [5, 6] or is_state('binary_sensor.workday_sensor', 'off') }}
+  - condition: state
+    entity_id: weather.forecast_maison
+    state: rainy
+  actions:
+  - action: light.turn_on
+    target:
+      area_id:
+      - salon
+      - foyer
+    data:
+      color_temp_kelvin: "{{ states('sensor.kelvin_stimulation') | int(6400) }}"
+      brightness_pct: 50
+      transition: 600
+  mode: single
+
+# ============================================================
+# [NUIT - ETEINDRE TOUTES LES LUMIERES SAUF ADRESSE]
+# ============================================================
+# Entre 22:30 et 23:30 (heure aleatoire), eteint toutes les lumieres allumees sauf celles de la zone Adresse.
+- id: 'night_random_turn_off_lights_except_adresse'
+  alias: Lumiere | Nuit | Eteindre toutes les lumieres sauf Adresse
+  description: Entre 22:30 et 23:30 (aleatoire), eteint toutes les lumieres allumees sauf la zone Adresse.
+  triggers:
+  - trigger: time
+    at: '22:30:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.luc_absent
+    state: 'on'
+  actions:
+  - delay:
+      seconds: "{{ range(0, 3601) | random }}"
+  - action: script.night_shutdown_except_adresse
+  - action: notify.toutes_les_alertes
+    data:
+      title: "💡 Lumières éteintes automatiquement"
+      message: "Toutes les lumières (sauf Adresse) ont été éteintes automatiquement à {{ now().strftime('%H:%M') }}."
+      target: "lucdelac@gmail.com"
+  mode: single
+
+# ============================================================
+# [PRESENCE - LUC ABSENT VIA CALENDRIER]
+# ============================================================
+# Active input_boolean.luc_absent pendant les evenements du calendrier local
+# calendar.luc_absent (journee complete ou plage horaire).
+- id: 'luc_absent_from_calendar'
+  alias: "Présence | Luc absent | Synchronisation calendrier"
+  description: "Active Luc absent pendant les événements de calendar.luc_absent."
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: state
+    entity_id: calendar.luc_absent
+  - trigger: time_pattern
+    minutes: '/15'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: calendar.luc_absent
+        state: 'on'
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.luc_absent
+    default:
+    - action: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.luc_absent
+  mode: single
+
+# ============================================================
+# [HUE - Matin simulation aube cote Luc]
+# ============================================================
+# A 06:30, la simulation aube commence.  
+- id: 'matin_reveille_aube_cote_luc'
+  alias: "Lumiere | Réveil : Aube Matinale - Chambre"
+  description: "Simulation aube douce Hue: 06:30 ambre faible, 06:45 plus clair, 07:30 extinction (semaine, hors vacances)."
+  triggers:
+  - trigger: time
+    at: '06:30:00'
+    id: dawn_warm_low
+  - trigger: time
+    at: '06:45:00'
+    id: dawn_warm_mid
+  - trigger: time
+    at: '07:30:00'
+    id: off_730
+  conditions:
+  - condition: state
+    entity_id: input_boolean.vacances
+    state: 'off'
+  - condition: time
+    weekday:
+    - tue
+    - wed
+    - thu
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: dawn_warm_low
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.cote_luc
+        data:
+          brightness_pct: 18
+          color_temp_kelvin: 2000
+          transition: 900           # 15 minutes pour le lever progressif
+    - conditions:
+      - condition: trigger
+        id: dawn_warm_mid
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id: light.cote_luc
+        data:
+          brightness_pct: 60
+          color_temp_kelvin: 2700
+          transition: 1800           # 30 minutes pour le lever progressif
+    - conditions:
+      - condition: trigger
+        id: off_730
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.cote_luc
+        data:
+          transition: 20
+  mode: restart
+
+# ============================================================
+# [CHAMBRE - ON/OFF SOLEIL ET 21H]
+# ============================================================
+# Allume 60 minutes avant le coucher du soleil avec la scene
+# Chambre Vent de montagne, puis eteint cote Luc et cote Vicki
+# a 21:00 avec une transition de 60 minutes.
+- id: 'bedroom_on_off_sunset_minus60_and_21h_transition'
+  alias: Lumiere | ON/OFF Chambre (cote Luc et cote Vicki)
+  description: Allume avec la scene Chambre Vent de montagne a -60 min du coucher du soleil, puis extinction progressive a 21:00 sur 60 minutes.
+  triggers:
+  - trigger: sun
+    event: sunset
+    offset: '-01:00:00'
+    id: on_minus_60
+  - trigger: time
+    at: '21:00:00'
+    id: off_2100
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_minus_60
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.chambre_vent_de_montagne
+    - conditions:
+      - condition: trigger
+        id: off_2100
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.cote_luc
+          - light.cote_vicki
+        data:
+          transition: 3600
+  mode: restart
+  
+# ============================================================
+# [CUISINE - ARMOIRE MATIN SAISONNIER]
+# ============================================================
+# De octobre a avril, active la scene Cuisine Nouveau scenario
+# a 06:45 les jours de semaine et a 07:30 la fin de semaine,
+# puis eteint la lumiere Armoire a 09:00.
+- id: 'kitchen_armoire_morning_oct_to_apr'
+  alias: Lumiere | Cuisine | Armoire matin saisonnier
+  description: Active la scene Cuisine Nouveau scenario le matin d'octobre a avril, puis eteint Armoire a 09:00.
+  triggers:
+  - trigger: time
+    at: '06:45:00'
+    id: weekday_on
+  - trigger: time
+    at: '07:30:00'
+    id: weekend_on
+  - trigger: time
+    at: '09:00:00'
+    id: turn_off
+  conditions:
+  - condition: template
+    value_template: "{{ now().month in [10, 11, 12, 1, 2, 3, 4] }}"
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: weekday_on
+      - condition: time
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+      sequence:
+      - action: scene.turn_on
+        target: 
+          entity_id: scene.cuisine_nouveau_scenario
+      - action: light.turn_on
+        target:
+          entity_id: light.armoire
+        data:
+          brightness_pct: 20
+    - conditions:
+      - condition: trigger
+        id: weekend_on
+      - condition: time
+        weekday:
+        - sat
+        - sun
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.cuisine_nouveau_scenario
+      - action: light.turn_on
+        target:
+          entity_id: light.armoire
+        data:
+          brightness_pct: 20
+    - conditions:
+      - condition: trigger
+        id: turn_off
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.armoire
+  mode: single
+
+# ============================================================
+# [EXTERIEUR - ON AU COUCHER DU SOLEIL ET OFF A 23H]
+# ============================================================
+# Au coucher du soleil, active la scene Concentration pour les lumieres exterieures.
+# A 23:00, eteint les lumieres de la zone Exterieur.
+- id: 'exterieur_lights_on_sunset_off_23h'
+  alias: Lumiere | ON/OFF Extérieur
+  description: Active la scene Exterieur Concentration au coucher du soleil, puis eteint les lumieres exterieures a 23h00.
+  triggers:
+  - trigger: sun
+    event: sunset
+    id: on_sunset
+  - trigger: time
+    at: '23:00:00'
+    id: off_23h
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: on_sunset
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.exterieur_concentration
+    - conditions:
+      - condition: trigger
+        id: off_23h
+      sequence:
+      - action: light.turn_off
+        target:
+          area_id: exterieur
+  mode: single
+
+
+
+# ============================================================
+# [MESSAGE RETRAITE - COMPTE A REBOURS RETRAITE]
+# ============================================================
+# Calcule le nombre de jours restants jusqu'au 1er mars 2027
+# et diffuse le message sur le Google Nest Hub du bureau Luc.
+- id: 'message_retraite_compte_rebours_2027'
+  alias: Message Retraite 9h | Compte a rebours retraite (1 mars 2027)
+  description: Diffuse le message de compte a rebours retraite sur le Google.
+  triggers:
+  - trigger: time
+    at: '09:00:00'
+  conditions: []
+  actions:
+  - action: scene.create
+    data:
+      scene_id: retraite_media_snapshot
+      snapshot_entities:
+        - media_player.luc
+        - media_player.vicki
+        - media_player.mini
+  - action: media_player.volume_set
+    target:
+      entity_id:
+        - media_player.luc
+        - media_player.vicki
+        - media_player.mini
+    data:
+      volume_level: 0.30
+  # - action: notify.google_assistant_sdk
+  - parallel:
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.luc
+        message: >-
+          {% set jours = states('sensor.NbJours15janvier2027') | int(0) %}
+          {% set semaines = (jours / 7) | int %}
+          {% set mois = (jours / 30.44) | int %}
+          Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.vicki
+        message: >-
+          {% set jours = states('sensor.NbJours15janvier2027') | int(0) %}
+          {% set semaines = (jours / 7) | int %}
+          {% set mois = (jours / 30.44) | int %}
+          Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.mini
+        message: >-
+          {% set jours = states('sensor.NbJours15janvier2027') | int(0) %}
+          {% set semaines = (jours / 7) | int %}
+          {% set mois = (jours / 30.44) | int %}
+          Vicki il te reste {{ mois }} mois, {{ semaines }} semaines, ou {{ jours }} jours avant la RETRAITE. Bonne journée.
+  - delay: '00:00:10'
+  - action: scene.turn_on
+    target:
+      entity_id: scene.retraite_media_snapshot
+  mode: single
+
+# ============================================================
+# [VERANDA - MESSAGE VOCAL MIDI SI TEMPERATURE > 20°C]
+# ============================================================
+# A midi tous les jours, si la temperature de la veranda depasse 20°C,
+# diffuse un message vocal sur le Google mini du salon.
+- id: 'veranda_noon_tts_if_warm'
+  alias: "Véranda | Midi | Message vocal si température > 20°C"
+  description: "A midi, si la véranda est au-dessus de 20°C, annonce qu'il fait beau pour dîner dehors."
+  triggers:
+    - trigger: time
+      at: '12:00:00'
+  conditions:
+    - condition: numeric_state
+      entity_id: sensor.veranda_temperature
+      above: 20
+  actions:
+    - action: media_player.volume_set
+      target:
+        entity_id: media_player.mini
+      data:
+        volume_level: 0.40
+    - action: tts.speak
+      target:
+        entity_id: tts.google_translate_fr_ca
+      data:
+        media_player_entity_id: media_player.mini
+        message: >-
+          {% set temp = states('sensor.veranda_temperature') | int %}
+          Il fait {{ temp }} degrés dans la véranda, je crois que c'est une bonne idée de dîner là.
+          {% if temp > 28 %} Parcontre vous devriez ouvrir les fenêtres de la véranda car il fait {{ temp }} degrés.{% endif %}
+    - delay: '00:00:15'
+    - action: media_player.volume_set
+      target:
+        entity_id: media_player.mini
+      data:
+        volume_level: 0.20
+  mode: single
+
+# - id: 'notification_remote_tv_pixel9a'
+#   alias: "TV | Notification | Pixel 9a via remote.tv"
+#   description: "Envoie TV ON/OFF sur le Pixel 9a selon l'état de remote.tv"
+#   triggers:
+#     - trigger: state
+#       entity_id: remote.tv
+#       to: 'on'
+#       id: tv_on
+#     - trigger: state
+#       entity_id: remote.tv
+#       to: 'off'
+#       id: tv_off
+#   conditions: []
+#   actions:
+#     - action: notify.mobile_app_lucdelac
+#       data:
+#         title: "Salon | Remote TV"
+#         message: >-
+#           {{ 'TV ON' if trigger.id == 'tv_on' else 'TV OFF' }}
+#           | Activite: {{ state_attr('remote.tv', 'current_activity') | default('unknown', true) }}
+#   mode: single
+- id: 'test_lumiere_chambre_ami'
+  alias: ZZ Test | Lumiere | chambre ami
+  description: test chambre ami, execution manuelle.
+  triggers: []
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      sequence:
+      - action: script.dim_chambre_ami_stimulation_test_1
+  mode: restart
+
+- id: '2_test_lumiere_chambre_ami'
+  alias: ZZ 2 Test | Lumiere | chambre ami
+  description: test chambre ami, execution manuelle.
+  triggers: []
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      sequence:
+      - action: script.dim_chambre_ami_stimulation_test_2
+  mode: single
+  
+- id: 'test_rezchausse_progressive_dim_if_mode_off'
+  alias: ZZ Test | Lumiere | DIM Sallon, foyer, Salle a manger et cuisine | Passage progressif soir
+  description: Copie de test sans declencheurs temporels/sun ni conditions saisonnieres; execution manuelle.
+  triggers: []
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.andre_mode
+        state: 'off'
+      - condition: state
+        entity_id: input_boolean.guest_mode
+        state: 'off'
+      - condition: state
+        entity_id: remote.tv
+        state: 'off'
+      sequence:
+      - action: script.dim_rezchausse_soir_test
+  mode: single
+
+# ============================================================
+# [TEST BUREAU LUC - MESSAGE VOCAL 15H30]
+# ============================================================
+# A 15:30, envoie un message vocal sur le Google Nest Hub de Bureau Luc.
+- id: 'test_bureau_luc_voice_1530'
+  alias: ZZ Test | Bureau Luc | Message vocal 15h30
+  description: A 15:30, diffuse Bonne fin de journée Luc sur Bureau Luc Google Nest Hub.
+  triggers:
+  - trigger: time
+    at: '15:30:00'
+  conditions: []
+  actions:
+  - action: tts.speak
+    target:
+      entity_id: tts.google_translate_fr_ca
+    data:
+      media_player_entity_id: media_player.luc
+      message: 'Bonne fin de journée Luc'
+  mode: single
+
+# ============================================================
+# [TEST BUREAU LUC - MESSAGE VOCAL Meteo DEMAIN GOOGLE-LIKE]
+# ============================================================
+# Test manuel: style plus conversationnel, facon assistant vocal.
+- id: 'test_bureau_luc_diffuse_meteo_google_like'
+  alias: ZZ Test | Bureau Luc | Message vocal Meteo demain Google-like
+  description: Test manuel, diffuse la meteo de demain avec formulation conversationnelle.
+  triggers: []
+  conditions: []
+  actions:
+  - action: weather.get_forecasts
+    target:
+      entity_id: weather.forecast_maison
+    data:
+      type: daily
+    response_variable: meteo_demain
+  - action: tts.speak
+    target:
+      entity_id: tts.google_translate_fr_ca
+    data:
+      media_player_entity_id: media_player.luc
+      message: >-
+        {% set f = meteo_demain['weather.forecast_maison'].forecast[0] %}
+        {% set condition_map = {
+          'clear-night': 'ciel degage',
+          'cloudy': 'nuageux',
+          'exceptional': 'conditions exceptionnelles',
+          'fog': 'brumeux',
+          'hail': 'de la grele',
+          'lightning': 'des orages',
+          'lightning-rainy': 'des orages avec pluie',
+          'partlycloudy': 'partiellement nuageux',
+          'pouring': 'de fortes pluies',
+          'rainy': 'de la pluie',
+          'snowy': 'de la neige',
+          'snowy-rainy': 'de la neige fondante',
+          'sunny': 'du soleil',
+          'windy': 'du vent',
+          'windy-variant': 'un ciel variable et du vent'
+        } %}
+        {% set cond = condition_map.get(f.condition, f.condition) %}
+        {% set tmax = f.temperature | round(0) %}
+        {% set tmin = f.templow | round(0) %}
+        {% set pluie = f.precipitation_probability | default(none) %}
+        Voici la meteo de demain. On attend {{ cond }}, avec un maximum de {{ tmax }} degres et un minimum de {{ tmin }} degres.{% if pluie is not none %} Probabilite de pluie: {{ pluie | round(0) }} pour cent.{% endif %} Bonne soiree.
+  mode: single
+
+# ============================================================
+# [STORES - VERIFICATION QUOTIDIENNE BATTERIE CAPTEURS]
+# ============================================================
+# Chaque jour a 09:00, appelle le script notifier_batterie_capteur_store
+# en parallele pour les 4 capteurs de stores.
+# Le script verifie la disponibilite, recupere la batterie et
+# envoie une notification sur le Pixel 9a si le capteur est disponible.
+- id: 'check_batterie_capteurs_stores_quotidien'
+  alias: "Store | 🔋 | Vérification quotidienne batterie capteurs"
+  description: "Chaque jour à 09:00, vérifie la batterie des 4 capteurs de stores et envoie une notification sur le Pixel 9a pour chaque capteur disponible."
+  triggers:
+  - trigger: time
+    at: '09:00:00'
+  conditions: []
+  actions:
+  - parallel:
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_chambre_amie
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_bureau_luc
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_salon_inverse
+    - action: script.notifier_batterie_capteur_store
+      data:
+        sensor_entity: binary_sensor.capteur_store_salle_a_manger_inverse
+  mode: single
+
+# ============================================================
+# [PRÉSENCE - Statut téléphone par courriel Gmail]
+# ============================================================
+- id: 'presence_phone_status_email_notification'
+  alias: "Présence | 📱 | Courriel Gmail - Statut téléphone arrivée/départ"
+  description: "Envoie un courriel Gmail quand person.maison change d'état (home/not_home)."
+  triggers:
+  - trigger: state
+    entity_id: person.maison
+    to: 'home'
+    for: '00:02:00'
+    id: arrived
+  - trigger: state
+    entity_id: person.maison
+    to: 'not_home'
+    for: '00:02:00'
+    id: departed
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: person.maison
+        state: 'home'
+      sequence:
+      - action: notify.toutes_les_alertes
+        data:
+          title: "📱 Téléphone – Arrivée à la maison"
+          message: >
+            Le téléphone ({{ state_attr('person.maison', 'friendly_name') | default('person.maison') }})
+            est arrivé à la maison à {{ now().strftime('%H:%M') }} le {{ now().strftime('%d/%m/%Y') }}.
+          target: "lucdelac@gmail.com"
+    - conditions:
+      - condition: state
+        entity_id: person.maison
+        state: 'not_home'
+      sequence:
+      - action: notify.toutes_les_alertes
+        data:
+          title: "📱 Téléphone – Départ de la maison"
+          message: >
+            Le téléphone ({{ state_attr('person.maison', 'friendly_name') | default('person.maison') }})
+            a quitté la maison à {{ now().strftime('%H:%M') }} le {{ now().strftime('%d/%m/%Y') }}.
+          target: "lucdelac@gmail.com"
+  mode: queued
+  max: 5
+
+# ============================================================
+# [SOUS-SOL - MODE CHEVEUR]
+# ============================================================
+- id: 'sous_sol_mode_cheveur'
+  alias: "Sous-sol | 💡 | Mode Cheveur ON/OFF"
+  description: "Quand Cheveur est activé, applique Concentration 100% au sous-sol et désactive le capteur de mouvement Hue. Quand Cheveur est désactivé, éteint les lumières et réactive le capteur."
+  triggers:
+  - trigger: state
+    entity_id: input_boolean.cheveur
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.cheveur
+        state: 'on'
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.sous_sol_concentration
+      - action: switch.turn_off
+        target:
+          entity_id: switch.hue_motion_bas_capteur_de_mouvement
+    default:
+    - action: light.turn_off
+      target:
+        entity_id: light.sous_sol
+    - action: switch.turn_on
+      target:
+        entity_id: switch.hue_motion_bas_capteur_de_mouvement
+  mode: restart
+
+# ============================================================
+# [TEST SMTP]
+# ============================================================
+- id: 'test_smtp_notification'
+  alias: "ZZ Test | SMTP | Envoyer email de test"
+  description: "Envoie un email de test via le nouveau service SMTP configuré en UI. Déclencher manuellement depuis Developer Tools."
+  triggers: []
+  conditions: []
+  actions:
+  - action: notify.toutes_les_alertes
+    data:
+      title: "✅ Test SMTP – Home Assistant"
+      message: >
+        Ceci est un email de test envoyé par Home Assistant.
+        Serveur : smtp.gmail.com
+        Date : {{ now().strftime('%d/%m/%Y à %H:%M:%S') }}
+        Si vous recevez ce message, le service SMTP fonctionne correctement.
+      target: "lucdelac@gmail.com"
+  mode: single
+
+# ============================================================
+# [Camera C320WS - Mode confidentiel coucher/lever du soleil]
+# ============================================================
+- id: 'c320_mode_confidentiel'
+  alias: "C320WS | Poulailler | Mode confidentiel coucher/lever du soleil"
+  description: "Active le mode confidentiel au coucher du soleil, le désactive 1 heure après le lever du soleil."
+  triggers:
+  - trigger: sun
+    event: sunset
+    id: activer
+  - trigger: sun
+    event: sunrise
+    offset: '01:00:00'
+    id: desactiver
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: activer
+      sequence:
+      - action: switch.turn_on
+        target:
+          entity_id: switch.poulailler_poulailler_porte_privacy
+    - conditions:
+      - condition: trigger
+        id: desactiver
+      sequence:
+      - action: switch.turn_off
+        target:
+          entity_id: switch.poulailler_poulailler_porte_privacy
+  mode: single
+
+# ============================================================
+# [SYSTEM - REDEMARRAGE PLANIFIE 03H]
+# ============================================================
+- id: 'ha_scheduled_restart_0300_if_requested'
+  alias: "System | HA | Redemarrage planifie a 03:00"
+  description: "A 03:00, redemarre Home Assistant si input_boolean.reboot_ha_3h est ON, puis remet le drapeau OFF."
+  triggers:
+  - trigger: time
+    at: '03:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.reboot_ha_3h
+    state: 'on'
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.reboot_ha_3h
+  - action: homeassistant.restart
+  mode: single
